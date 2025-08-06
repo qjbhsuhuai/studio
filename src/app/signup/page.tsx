@@ -18,9 +18,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
 import { db } from "@/lib/firebase"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -53,9 +55,18 @@ export default function SignupPage() {
       
       // Store username for dashboard
       localStorage.setItem("username", email.split('@')[0])
+      toast({
+        title: "สร้างบัญชีสำเร็จ",
+        description: "บัญชีของคุณพร้อมใช้งานแล้ว กำลังนำคุณไปยังแดชบอร์ด",
+      })
       router.push("/dashboard")
     } catch (err) {
       setError("เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่")
+      toast({
+        title: "สมัครสมาชิกไม่สำเร็จ",
+        description: "เกิดข้อผิดพลาดในการสร้างบัญชีของคุณ กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      })
       console.error(err)
     } finally {
       setIsLoading(false)

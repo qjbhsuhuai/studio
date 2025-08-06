@@ -36,6 +36,10 @@ export default function LoginPage() {
     // Simplified admin check
     if (loginInput.toLowerCase() === 'admin' && password === 'admin') {
       localStorage.setItem("username", "admin")
+       toast({
+        title: "เข้าสู่ระบบสำเร็จ",
+        description: "ยินดีต้อนรับ, แอดมิน!",
+      })
       router.push("/dashboard")
       return
     }
@@ -62,6 +66,10 @@ export default function LoginPage() {
 
         if (userFound && userData) {
           localStorage.setItem("username", userData.email.split('@')[0]);
+          toast({
+            title: "เข้าสู่ระบบสำเร็จ",
+            description: `ยินดีต้อนรับ, ${userData.firstName}!`,
+          })
           router.push("/dashboard");
         } else {
            toast({
