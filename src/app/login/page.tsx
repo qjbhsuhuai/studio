@@ -48,6 +48,7 @@ export default function LoginPage() {
         description: "ยินดีต้อนรับ, แอดมิน!",
       })
       setLoggedInUsername("admin")
+      setIsLoading(false)
       return
     }
 
