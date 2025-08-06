@@ -73,14 +73,22 @@ export default function LoginPage() {
         }
 
         if (userFound && userData) {
-          toast({
-            title: "เข้าสู่ระบบสำเร็จ",
-            description: `ยินดีต้อนรับ, ${userData.firstName}!`,
-          })
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('userEmail', userData.email);
+          if (userData.status === "Banned") {
+            toast({
+              title: "เข้าสู่ระบบไม่สำเร็จ",
+              description: "บัญชีของคุณถูกระงับการใช้งาน",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "เข้าสู่ระบบสำเร็จ",
+              description: `ยินดีต้อนรับ, ${userData.firstName}!`,
+            })
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem('userEmail', userData.email);
+            }
+            router.push("/dashboard")
           }
-          router.push("/dashboard")
         } else {
            toast({
             title: "เข้าสู่ระบบไม่สำเร็จ",
