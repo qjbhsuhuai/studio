@@ -1,4 +1,4 @@
-"use client" // For charts and interactive components
+"use client"
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { Cpu, Database, MemoryStick, Timer } from "lucide-react"

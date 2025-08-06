@@ -33,7 +33,7 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">BotFarm User</p>
+            <p className="text-sm font-medium leading-none">ผู้ใช้</p>
             <p className="text-xs leading-none text-muted-foreground">
               user@example.com
             </p>
@@ -42,18 +42,18 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            Profile
+            แก้ไขโปรไฟล์
           </DropdownMenuItem>
           <DropdownMenuItem>
-            Billing
+            การเรียกเก็บเงิน
           </DropdownMenuItem>
           <DropdownMenuItem>
-            Settings
+            ตั้งค่า
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push('/login')}>
-          Log out
+          ออกจากระบบ
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
