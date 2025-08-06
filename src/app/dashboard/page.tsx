@@ -1,7 +1,8 @@
+
 "use client"
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { Cpu, Database, MemoryStick, Timer, Bot, CheckCircle, XCircle, Clock, Server } from "lucide-react"
+import { Cpu, Bot, CheckCircle, XCircle, Server, MemoryStick } from "lucide-react"
 import useSWR from 'swr'
 import Link from "next/link"
 
@@ -85,7 +86,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{totalCpuUsage.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              ความเสี่ยงดาวน์ไทม์: 0%
+              ภาพรวมการใช้งาน CPU ทั้งหมด
             </p>
             <Progress value={totalCpuUsage} className="mt-4 h-2" />
           </CardContent>
@@ -98,9 +99,9 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{totalMemoryUsage.toFixed(1)} MB</div>
             <p className="text-xs text-muted-foreground">
-              ไม่มีข้อมูล
+               ภาพรวมการใช้งาน Memory ทั้งหมด
             </p>
-            <Progress value={0} className="mt-4 h-2" />
+             <Progress value={(totalMemoryUsage / 1024)} className="mt-4 h-2" />
           </CardContent>
         </Card>
          <Card>

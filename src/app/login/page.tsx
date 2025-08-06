@@ -73,16 +73,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   }
-  
-  // This useEffect is no longer needed as settings are now in Firebase
-  // useEffect(() => {
-  //   const activeApiUrl = localStorage.getItem("activeApiUrl");
-  //   if (!activeApiUrl) {
-  //      localStorage.setItem("apiList", JSON.stringify([{id: "1", name: "Default Server", url: "https://cfgnnn-production.up.railway.app"}]));
-  //      localStorage.setItem("activeApiUrl", "https://cfgnnn-production.up.railway.app");
-  //   }
-  // }, []);
-
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -36,11 +37,11 @@ export default function ProfilePage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">ชื่อ</Label>
-            <Input id="name" />
+            <Input id="name" placeholder="ชื่อที่แสดง" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">อีเมล</Label>
-            <Input id="email" type="email" disabled />
+            <Input id="email" type="email" placeholder="m@example.com" disabled />
           </div>
            <div className="space-y-2">
             <Label htmlFor="current-password">รหัสผ่านปัจจุบัน</Label>

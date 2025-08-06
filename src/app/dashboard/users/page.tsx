@@ -121,14 +121,20 @@ export default function UsersPage() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>การจัดการผู้ใช้</CardTitle>
-          <CardDescription>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">การจัดการผู้ใช้</h1>
+          <p className="text-muted-foreground">
             จัดการผู้ใช้ทั้งหมดในระบบของคุณ
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            เพิ่มผู้ใช้ใหม่
+        </Button>
+      </div>
+      <Card>
+        <CardContent className="mt-6">
           <Table>
             <TableHeader>
               <TableRow>
