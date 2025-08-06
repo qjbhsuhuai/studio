@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, ShieldX } from "lucide-react"
+import { Eye, EyeOff, ShieldX, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -201,7 +201,14 @@ export default function LoginPage() {
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    กำลังตรวจสอบ...
+                  </>
+                ) : (
+                  "เข้าสู่ระบบ"
+                )}
               </Button>
               <Button variant="outline" className="w-full" disabled={isLoading}>
                 <GoogleIcon className="mr-2 h-4 w-4" />
