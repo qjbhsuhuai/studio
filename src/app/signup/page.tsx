@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -46,7 +47,8 @@ export default function SignupPage() {
         lastName,
         email,
         password, // Note: Storing plain text passwords is not secure. Use Firebase Authentication.
-        role: email.toLowerCase() === 'admin@example.com' ? 'Admin' : 'User'
+        role: email.toLowerCase() === 'admin@example.com' ? 'Admin' : 'User',
+        credits: 0 // Add starting credits
       });
       
       // Store username for dashboard

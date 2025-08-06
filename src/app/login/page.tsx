@@ -74,13 +74,14 @@ export default function LoginPage() {
     }
   }
   
-    useEffect(() => {
-    const activeApiUrl = localStorage.getItem("activeApiUrl");
-    if (!activeApiUrl) {
-       localStorage.setItem("apiList", JSON.stringify([{id: "1", name: "Default Server", url: "https://cfgnnn-production.up.railway.app"}]));
-       localStorage.setItem("activeApiUrl", "https://cfgnnn-production.up.railway.app");
-    }
-  }, []);
+  // This useEffect is no longer needed as settings are now in Firebase
+  // useEffect(() => {
+  //   const activeApiUrl = localStorage.getItem("activeApiUrl");
+  //   if (!activeApiUrl) {
+  //      localStorage.setItem("apiList", JSON.stringify([{id: "1", name: "Default Server", url: "https://cfgnnn-production.up.railway.app"}]));
+  //      localStorage.setItem("activeApiUrl", "https://cfgnnn-production.up.railway.app");
+  //   }
+  // }, []);
 
 
   return (
@@ -99,9 +100,11 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">ชื่อผู้ใช้</Label>
+              <Label htmlFor="username">อีเมล</Label>
               <Input
                 id="username"
+                type="email"
+                placeholder="m@example.com"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}

@@ -1,7 +1,11 @@
+
 "use client"
 
-import { useState } from "react"
-import { MoreHorizontal } from "lucide-react"
+import { useState, useEffect } from "react"
+import { MoreHorizontal, UserPlus } from "lucide-react"
+import { get, ref, set, onValue, off } from "firebase/database"
+import { db } from "@/lib/firebase"
+import { useToast } from "@/hooks/use-toast"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,22 +43,80 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const users: any[] = []
-
 type User = {
+  id: string
+  firstName: string
+  lastName: string
   name: string
   email: string
   role: string
   avatar: string
+  credits?: number
 }
 
 export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [credits, setCredits] = useState<number>(0)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const usersRef = ref(db, 'users/');
+    const listener = onValue(usersRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const usersData = snapshot.val();
+        const usersList: User[] = Object.keys(usersData).map(key => ({
+          id: key,
+          ...usersData[key],
+          name: `${usersData[key].firstName} ${usersData[key].lastName}`,
+          avatar: '' // Placeholder for avatar
+        }));
+        setUsers(usersList);
+      } else {
+        setUsers([]);
+      }
+      setIsLoading(false);
+    });
+
+    // Cleanup listener on component unmount
+    return () => off(usersRef, 'value', listener);
+  }, []);
 
   const handleManageClick = (user: User) => {
     setSelectedUser(user)
+    setCredits(user.credits ?? 0)
     setIsDialogOpen(true)
+  }
+  
+  const handleSaveChanges = async () => {
+    if (!selectedUser) return;
+    
+    const userRef = ref(db, `users/${selectedUser.id}`);
+    try {
+      // Get current user data to avoid overwriting other fields
+      const snapshot = await get(userRef);
+      if(snapshot.exists()) {
+        const userData = snapshot.val();
+        await set(userRef, {
+          ...userData,
+          credits: credits
+        });
+        toast({
+          title: "สำเร็จ",
+          description: `บันทึกข้อมูลของ ${selectedUser.name} เรียบร้อยแล้ว`,
+        });
+      }
+       setIsDialogOpen(false);
+       setSelectedUser(null);
+    } catch (error) {
+       toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถบันทึกข้อมูลได้",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -72,24 +134,32 @@ export default function UsersPage() {
               <TableRow>
                 <TableHead>ผู้ใช้</TableHead>
                 <TableHead>บทบาท</TableHead>
+                <TableHead>เครดิต</TableHead>
                 <TableHead className="text-right">การกระทำ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.length === 0 && (
+              {isLoading && (
+                 <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    กำลังโหลด...
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     ไม่มีผู้ใช้
                   </TableCell>
                 </TableRow>
               )}
-              {users.map((user) => (
+              {!isLoading && users.map((user) => (
                 <TableRow key={user.email}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar" />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">
                         <div>{user.name}</div>
@@ -102,6 +172,9 @@ export default function UsersPage() {
                       {user.role}
                     </Badge>
                   </TableCell>
+                   <TableCell>
+                      {user.credits ?? 0}
+                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -112,9 +185,8 @@ export default function UsersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleManageClick(user)}>
-                          เปลี่ยนรหัสผ่าน
+                          จัดการเครดิต
                         </DropdownMenuItem>
-                        <DropdownMenuItem>ดูโปรไฟล์</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -128,30 +200,22 @@ export default function UsersPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>เปลี่ยนรหัสผ่านสำหรับ {selectedUser.name}</DialogTitle>
+              <DialogTitle>จัดการเครดิตสำหรับ {selectedUser.name}</DialogTitle>
               <DialogDescription>
-                กรุณาป้อนรหัสผ่านใหม่สำหรับ {selectedUser.email}
+                คุณสามารถเพิ่มหรือลดเครดิตสำหรับผู้ใช้นี้ได้
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="new-password" className="text-right">
-                  รหัสผ่านใหม่
+                <Label htmlFor="credits" className="text-right">
+                  เครดิต
                 </Label>
                 <Input
-                  id="new-password"
-                  type="password"
+                  id="credits"
+                  type="number"
                   className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="confirm-password" className="text-right">
-                  ยืนยันรหัสผ่าน
-                </Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  className="col-span-3"
+                  value={credits}
+                  onChange={(e) => setCredits(Number(e.target.value))}
                 />
               </div>
             </div>
@@ -159,7 +223,7 @@ export default function UsersPage() {
               <Button onClick={() => setIsDialogOpen(false)} variant="outline">
                 ยกเลิก
               </Button>
-              <Button onClick={() => setIsDialogOpen(false)}>บันทึก</Button>
+              <Button onClick={handleSaveChanges}>บันทึก</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
