@@ -24,7 +24,10 @@ export function UserNav() {
 
   useEffect(() => {
     // Ensure this runs only on the client
-    setUsername(localStorage.getItem("username"))
+    const storedUsername = localStorage.getItem("username")
+    if (storedUsername) {
+      setUsername(storedUsername)
+    }
   }, [])
 
   const isAdmin = username === "admin"
@@ -52,6 +55,12 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+            แดชบอร์ด
+          </DropdownMenuItem>
+           <DropdownMenuItem onClick={() => router.push('/dashboard/bots')}>
+            บอท
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
             โปรไฟล์
           </DropdownMenuItem>
