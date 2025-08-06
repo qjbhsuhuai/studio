@@ -60,7 +60,7 @@ export function UserNav() {
                         lastName: "",
                         email: "admin@example.com",
                         role: "Admin",
-                        credits: 999
+                        credits: 0
                     });
                 } else {
                     // User logged in but not found in DB, clear session
