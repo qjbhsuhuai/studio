@@ -6,6 +6,8 @@ import { Play, StopCircle, Trash2, Upload, FilePlus, FolderPlus, Terminal, Chevr
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ref, onValue } from 'firebase/database';
+import { db } from '@/lib/firebase';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -15,59 +17,74 @@ export default function BotDetailPage({ params }: { params: { botName: string } 
     const [logs, setLogs] = useState('');
     const ws = useRef<WebSocket | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
+    const [activeApiUrl, setActiveApiUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const settingsRef = ref(db, 'admin/serverSettings/activeApiUrl');
+        const unsubscribe = onValue(settingsRef, (snapshot) => {
+            const url = snapshot.val();
+            if (url) {
+                setActiveApiUrl(url);
+            } else {
+                 // Fallback or default if not set
+                setActiveApiUrl("https://cfgnnn-production.up.railway.app");
+            }
+        });
+        return () => unsubscribe();
+    }, []);
     
     useEffect(() => {
+        if (!activeApiUrl) return;
+
         // Fetch initial logs
         fetch(`/api/logs/${botName}`)
             .then(res => res.json())
             .then(data => setLogs(data.logs || 'ยังไม่มี Log สำหรับโปรเจกต์นี้\n'));
 
-        // Setup WebSocket connection
-        // The WebSocket connection needs to point to the backend server,
-        // which might be different from the Next.js app's host.
-        // For now, we'll construct it based on the current window location,
-        // assuming the backend is proxied through the same host.
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Replace http/https with ws/wss for the WebSocket URL
-        const wsUrl = new URL(window.location.href);
-        wsUrl.protocol = wsProtocol;
-        wsUrl.pathname = ''; // Connect to the root for WebSocket handshake
-        
-        ws.current = new WebSocket(wsUrl.toString());
+        try {
+            const serverUrl = new URL(activeApiUrl);
+            const wsProtocol = serverUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${serverUrl.host}`;
+            
+            ws.current = new WebSocket(wsUrl);
 
+            ws.current.onopen = () => {
+                console.log('WebSocket connected');
+                ws.current?.send(JSON.stringify({ type: 'connect', botName }));
+            };
 
-        ws.current.onopen = () => {
-            console.log('WebSocket connected');
-            ws.current?.send(JSON.stringify({ type: 'connect', botName }));
-        };
-
-        ws.current.onmessage = (event) => {
-            try {
-                const message = JSON.parse(event.data);
-                if (message.type === 'log') {
-                    setLogs(prevLogs => prevLogs + message.data);
-                } else if (message.type === 'exit') {
-                    setLogs(prevLogs => prevLogs + `\n[System] โปรเจกต์หยุดทำงานด้วย exit code ${message.code}.\n`);
+            ws.current.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    if (message.type === 'log') {
+                        setLogs(prevLogs => prevLogs + message.data);
+                    } else if (message.type === 'exit') {
+                        setLogs(prevLogs => prevLogs + `\n[System] โปรเจกต์หยุดทำงานด้วย exit code ${message.code}.\n`);
+                    }
+                } catch (e) {
+                     setLogs(prevLogs => prevLogs + event.data);
                 }
-            } catch (e) {
-                 setLogs(prevLogs => prevLogs + event.data);
-            }
-        };
+            };
 
-        ws.current.onclose = () => {
-            console.log('WebSocket disconnected');
-             setLogs(prevLogs => prevLogs + '\n[System] การเชื่อมต่อกับเซิร์ฟเวอร์ถูกตัด\n');
-        };
+            ws.current.onclose = () => {
+                console.log('WebSocket disconnected');
+                 setLogs(prevLogs => prevLogs + '\n[System] การเชื่อมต่อกับเซิร์ฟเวอร์ถูกตัด\n');
+            };
 
-        ws.current.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            setLogs(prevLogs => prevLogs + '\n[System] เกิดข้อผิดพลาดในการเชื่อมต่อ WebSocket\n');
-        };
+            ws.current.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                setLogs(prevLogs => prevLogs + '\n[System] เกิดข้อผิดพลาดในการเชื่อมต่อ WebSocket\n');
+            };
+        } catch (error) {
+            console.error("Failed to construct WebSocket URL:", error);
+            setLogs(prevLogs => prevLogs + '\n[System] URL ของ API ไม่ถูกต้อง ไม่สามารถสร้างการเชื่อมต่อ WebSocket ได้\n');
+        }
+
 
         return () => {
             ws.current?.close();
         };
-    }, [botName]);
+    }, [botName, activeApiUrl]);
 
     useEffect(() => {
         // Auto-scroll logs
