@@ -3,10 +3,8 @@
 
 import useSWR from 'swr'
 import Link from "next/link"
-import { CheckCircle, XCircle } from "lucide-react"
+import { CpuIcon, MemoryStickIcon, GaugeIcon, BotIcon } from "@/components/icons"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -14,95 +12,86 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Button } from '@/components/ui/button'
+
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 export default function DashboardPage() {
-    const { data, error } = useSWR('/api/scripts', fetcher, { refreshInterval: 5000 });
+    const { data: scriptsData } = useSWR('/api/scripts', fetcher, { refreshInterval: 5000 });
+    const { data: envData } = useSWR('/api/environment', fetcher);
+
+    const totalBots = scriptsData?.scripts?.length || 0;
+    const runningBots = scriptsData?.scripts?.filter((bot: any) => bot.status === 'running').length || 0;
+
+    const aggregateStats = (scripts: any[]) => {
+        if (!scripts || scripts.length === 0) {
+            return { totalCpu: 0, totalMemory: 0 };
+        }
+        return scripts.reduce(
+            (acc, bot) => {
+                if (bot.status === 'running') {
+                    acc.totalCpu += parseFloat(bot.cpu) || 0;
+                    acc.totalMemory += parseFloat(bot.memory) || 0;
+                }
+                return acc;
+            },
+            { totalCpu: 0, totalMemory: 0 }
+        );
+    };
+
+    const { totalCpu, totalMemory } = aggregateStats(scriptsData?.scripts);
+
 
   return (
     <>
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>แผงควบคุมโฮสติ้งบอท</CardTitle>
-            <CardDescription>
-              จัดการบอท Discord, Telegram และบอทอื่นๆ ของคุณ
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ชื่อ</TableHead>
-                  <TableHead>ประเภท</TableHead>
-                  <TableHead>สถานะ</TableHead>
-                  <TableHead className="text-right">การกระทำ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {error && (
-                    <TableRow>
-                        <TableCell colSpan={4} className="text-center text-destructive">
-                            ไม่สามารถโหลดข้อมูลบอทได้
-                        </TableCell>
-                    </TableRow>
-                )}
-                {!data && !error && (
-                    <TableRow>
-                        <TableCell colSpan={4} className="text-center">
-                            กำลังโหลด...
-                        </TableCell>
-                    </TableRow>
-                )}
-                {data?.scripts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center">
-                      ไม่มีบอท
-                    </TableCell>
-                  </TableRow>
-                )}
-                {data?.scripts.map((bot: any) => (
-                  <TableRow key={bot.name}>
-                    <TableCell className="font-medium">{bot.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{bot.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                       <Badge
-                        variant={
-                          bot.status === "running"
-                            ? "default"
-                            : "secondary"
-                        }
-                        className={bot.status === 'running' ? 'bg-green-500 hover:bg-green-600' : ''}
-                      >
-                         {bot.status === "running" ? (
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                         ) : (
-                            <XCircle className="mr-1 h-3 w-3" />
-                         )}
-                        {bot.status === "running" ? "ออนไลน์" : "ออฟไลน์"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/dashboard/bots/${bot.name}`}>จัดการ</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">บอททั้งหมด</CardTitle>
+                    <BotIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalBots}</div>
+                    <p className="text-xs text-muted-foreground">{runningBots} ตัวกำลังทำงาน</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">การใช้ CPU ทั้งหมด</CardTitle>
+                    <CpuIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalCpu.toFixed(1)}%</div>
+                    <p className="text-xs text-muted-foreground">จากทุกโปรเจกต์ที่ทำงานอยู่</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">การใช้ Memory ทั้งหมด</CardTitle>
+                    <MemoryStickIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalMemory.toFixed(1)} MB</div>
+                     <p className="text-xs text-muted-foreground">จากทุกโปรเจกต์ที่ทำงานอยู่</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">สถานะเซิร์ฟเวอร์</CardTitle>
+                    <GaugeIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold text-green-400">ออนไลน์</div>
+                    <p className="text-xs text-muted-foreground">ทำงานบน: {envData?.detail || 'กำลังโหลด...'}</p>
+                </CardContent>
+            </Card>
+        </div>
+        <div className="flex items-center justify-center">
+             <Button asChild className="mt-8">
+                <Link href="/dashboard/bots">ไปที่หน้าจัดการโปรเจกต์</Link>
+            </Button>
+        </div>
     </>
   )
 }
