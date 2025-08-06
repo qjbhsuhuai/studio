@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ref, set } from "firebase/database"
 
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,11 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,14 +55,20 @@ export default function SignupPage() {
         email,
         password, // Note: Storing plain text passwords is not secure. Use Firebase Authentication.
         role: email.toLowerCase() === 'admin@example.com' ? 'Admin' : 'User',
-        credits: 0 // Add starting credits
+        credits: 0, // Add starting credits
+        status: "Active"
       });
       
       toast({
         title: "สร้างบัญชีสำเร็จ",
-        description: "บัญชีของคุณพร้อมใช้งานแล้ว กำลังนำคุณไปยังแดชบอร์ด",
+        description: "บัญชีของคุณพร้อมใช้งานแล้ว",
       })
-      router.push("/dashboard")
+      
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('userEmail', email);
+        router.push("/dashboard")
+      }
+      
     } catch (err) {
       setError("เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่")
       toast({
@@ -70,6 +81,11 @@ export default function SignupPage() {
       setIsLoading(false)
     }
   }
+  
+  if (!isClient) {
+    return null;
+  }
+
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
