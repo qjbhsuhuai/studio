@@ -30,11 +30,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [isBanned, setIsBanned] = useState(false)
+  const [shake, setShake] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,6 +86,7 @@ export default function LoginPage() {
         if (userFound && userData) {
            if (userData.status === "Banned") {
             setIsBanned(true)
+            triggerShake();
             toast({
               title: "เข้าสู่ระบบไม่สำเร็จ",
               description: "บัญชีของคุณถูกระงับการใช้งาน",
@@ -127,8 +134,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <Card className={cn(
-          "w-full max-w-md transition-all duration-500",
-          isBanned ? "border-destructive bg-destructive/10" : ""
+          "w-full max-w-md transition-all duration-300",
+           isBanned ? "border-destructive bg-destructive/10" : "",
+           shake ? "animate-shake" : ""
         )}>
         <CardHeader className="text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
@@ -141,7 +149,7 @@ export default function LoginPage() {
         <CardContent>
           {isBanned ? (
             <div className="flex flex-col items-center justify-center text-center text-destructive p-4">
-                <ShieldX className="h-24 w-24 mb-4" />
+                <ShieldX className="h-28 w-28 mb-4 drop-shadow-[0_0_10px_hsl(var(--destructive))]"/>
                 <h2 className="text-2xl font-bold">บัญชีนี้ถูกระงับ</h2>
                 <p className="text-sm text-destructive/80">กรุณาติดต่อผู้ดูแลระบบ</p>
             </div>
