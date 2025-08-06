@@ -1,6 +1,6 @@
 import { type ReactNode } from "react"
 import Link from "next/link"
-import { Bell, Bot, Home, LifeBuoy, Search, Server, Settings2, BarChart2, Users } from "lucide-react"
+import { Bell, Bot, Home, LifeBuoy, Search, Settings2 } from "lucide-react"
 
 import {
   SidebarProvider,
@@ -24,9 +24,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/dashboard", icon: <Home />, label: "แดชบอร์ด" },
     { href: "/dashboard/bots", icon: <Bot />, label: "บอท" },
-    { href: "/dashboard/users", icon: <Users />, label: "ผู้ใช้" },
-    { href: "#", icon: <Server />, label: "เซิร์ฟเวอร์" },
-    { href: "#", icon: <BarChart2 />, label: "การใช้งาน" },
   ]
 
   const secondaryNavItems = [
