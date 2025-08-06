@@ -31,7 +31,7 @@ export default function LoginPage() {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    setIsClient(true);
+    setIsClient(true)
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -39,96 +39,94 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-        // Simplified admin check
-        if (loginInput.toLowerCase() === 'admin' && password === 'admin') {
-            toast({
-                title: "เข้าสู่ระบบสำเร็จ",
-                description: "ยินดีต้อนรับ, แอดมิน!",
-            })
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('userEmail', 'admin@example.com');
-            }
-            router.push("/dashboard")
-            return
-        }
-
-        const usersRef = ref(db, 'users/');
-        const snapshot = await get(usersRef);
-
-        if (snapshot.exists()) {
-            const usersData = snapshot.val();
-            let userFound = false;
-            let userData = null;
-
-            for (const key in usersData) {
-                const user = usersData[key];
-                const username = user.email?.split('@')[0];
-                if ((user.email.toLowerCase() === loginInput.toLowerCase() || (username && username.toLowerCase() === loginInput.toLowerCase())) && user.password === password) {
-                    userFound = true;
-                    userData = user;
-                    break;
-                }
-            }
-
-            if (userFound && userData) {
-                if (userData.status === "Banned") {
-                    toast({
-                        title: "เข้าสู่ระบบไม่สำเร็จ",
-                        description: "บัญชีของคุณถูกระงับการใช้งาน",
-                        variant: "destructive"
-                    });
-                } else {
-                    toast({
-                        title: "เข้าสู่ระบบสำเร็จ",
-                        description: `ยินดีต้อนรับ, ${userData.firstName}!`,
-                    })
-                    if (typeof window !== 'undefined') {
-                        sessionStorage.setItem('userEmail', userData.email);
-                    }
-                    router.push("/dashboard")
-                }
-            } else {
-                toast({
-                    title: "เข้าสู่ระบบไม่สำเร็จ",
-                    description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
-                    variant: "destructive"
-                });
-            }
-        } else {
-            toast({
-                title: "เข้าสู่ระบบไม่สำเร็จ",
-                description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
-                variant: "destructive"
-            });
-        }
-    } catch (err) {
-        console.error(err);
+      // Simplified admin check
+      if (loginInput.toLowerCase() === "admin" && password === "admin") {
         toast({
-            title: "เกิดข้อผิดพลาด",
-            description: "ไม่สามารถเชื่อมต่อเพื่อเข้าสู่ระบบได้",
-            variant: "destructive"
-        });
+          title: "เข้าสู่ระบบสำเร็จ",
+          description: "ยินดีต้อนรับ, แอดมิน!",
+        })
+        sessionStorage.setItem("userEmail", "admin@example.com")
+        router.push("/dashboard")
+        return
+      }
+
+      const usersRef = ref(db, "users/")
+      const snapshot = await get(usersRef)
+
+      if (snapshot.exists()) {
+        const usersData = snapshot.val()
+        let userFound = false
+        let userData = null
+
+        for (const key in usersData) {
+          const user = usersData[key]
+          const username = user.email?.split("@")[0]
+          if (
+            (user.email.toLowerCase() === loginInput.toLowerCase() ||
+              (username && username.toLowerCase() === loginInput.toLowerCase())) &&
+            user.password === password
+          ) {
+            userFound = true
+            userData = user
+            break
+          }
+        }
+
+        if (userFound && userData) {
+          if (userData.status === "Banned") {
+            toast({
+              title: "เข้าสู่ระบบไม่สำเร็จ",
+              description: "บัญชีของคุณถูกระงับการใช้งาน",
+              variant: "destructive",
+            })
+          } else {
+            toast({
+              title: "เข้าสู่ระบบสำเร็จ",
+              description: `ยินดีต้อนรับ, ${userData.firstName}!`,
+            })
+            sessionStorage.setItem("userEmail", userData.email)
+            router.push("/dashboard")
+          }
+        } else {
+          toast({
+            title: "เข้าสู่ระบบไม่สำเร็จ",
+            description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
+            variant: "destructive",
+          })
+        }
+      } else {
+        toast({
+          title: "เข้าสู่ระบบไม่สำเร็จ",
+          description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถเชื่อมต่อเพื่อเข้าสู่ระบบได้",
+        variant: "destructive",
+      })
     } finally {
-        setIsLoading(false);
+      setIsLoading(false)
     }
   }
 
   if (!isClient) {
-    return null;
+    return null
   }
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <BotIcon className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold">BotFarm</h1>
-            </div>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <BotIcon className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold">BotFarm</h1>
+          </div>
           <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
-          <CardDescription>
-            กรอกข้อมูลของคุณเพื่อเข้าสู่ระบบ
-          </CardDescription>
+          <CardDescription>กรอกข้อมูลของคุณเพื่อเข้าสู่ระบบ</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
@@ -140,7 +138,7 @@ export default function LoginPage() {
                 placeholder="ชื่อผู้ใช้ หรือ m@example.com"
                 required
                 value={loginInput}
-                onChange={(e) => setLoginInput(e.target.value)}
+                onChange={e => setLoginInput(e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -155,12 +153,12 @@ export default function LoginPage() {
                 </Link>
               </div>
               <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  required 
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   disabled={isLoading}
                   className="pr-10"
                 />
@@ -169,12 +167,16 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                  )}
                 </button>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
+              {isLoading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
             </Button>
             <Button variant="outline" className="w-full" disabled={isLoading}>
               <GoogleIcon className="mr-2 h-4 w-4" />

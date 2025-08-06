@@ -1,6 +1,5 @@
 
 import { type ReactNode } from "react"
-import { Toaster } from "@/components/ui/toaster"
 import { UserNav } from "@/components/user-nav"
 import { BotIcon } from "@/components/icons"
 import Link from "next/link"
@@ -29,7 +28,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
-      <Toaster />
     </>
   )
 }
