@@ -1,10 +1,9 @@
-// This is a placeholder file. The content will be implemented in the next steps.
 "use client"
 
 import { useState } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, ExternalLink } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, ExternalLink, GitBranch, Upload, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -37,9 +36,16 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -48,9 +54,14 @@ export default function BotsPage() {
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [selectedBot, setSelectedBot] = useState<string | null>(null);
     const [moduleName, setModuleName] = useState('');
-    
+    const [newBotName, setNewBotName] = useState('');
+    const [gitUrl, setGitUrl] = useState('');
+    const [zipFile, setZipFile] = useState<File | null>(null);
+    const [createError, setCreateError] = useState<string | null>(null);
+
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
         try {
@@ -63,7 +74,6 @@ export default function BotsPage() {
                 const errorData = await res.json();
                 alert(`เกิดข้อผิดพลาด: ${errorData.message}`);
             }
-            // No need to call mutate() here, SWR will revalidate automatically
         } catch (err) {
             alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err}`);
         } finally {
@@ -112,7 +122,6 @@ export default function BotsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ botName: selectedBot, module: moduleName }),
             });
-            // The result will be streamed via WebSocket, just close the dialog.
         } catch (err) {
              alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err}`);
         } finally {
@@ -123,6 +132,41 @@ export default function BotsPage() {
         }
     };
 
+    const handleCreateProject = async (creationMethod: 'empty' | 'git' | 'zip') => {
+        setIsLoading(prev => ({ ...prev, create: true }));
+        setCreateError(null);
+        const formData = new FormData();
+        formData.append('botName', newBotName);
+        formData.append('creationMethod', creationMethod);
+
+        if (creationMethod === 'git') {
+            formData.append('gitUrl', gitUrl);
+        } else if (creationMethod === 'zip' && zipFile) {
+            formData.append('file', zipFile);
+        }
+
+        try {
+            const res = await fetch('/api/upload/project', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
+            }
+            alert('สร้างโปรเจกต์สำเร็จ!');
+            setIsCreateDialogOpen(false);
+            setNewBotName('');
+            setGitUrl('');
+            setZipFile(null);
+            mutate();
+        } catch (err: any) {
+            setCreateError(err.message);
+        } finally {
+            setIsLoading(prev => ({ ...prev, create: false }));
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -130,10 +174,80 @@ export default function BotsPage() {
                     <h1 className="text-2xl font-bold">จัดการบอท</h1>
                     <p className="text-muted-foreground">จัดการโปรเจกต์บอททั้งหมดของคุณที่นี่</p>
                 </div>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    สร้างโปรเจกต์ใหม่
-                </Button>
+                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            สร้างโปรเจกต์ใหม่
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[525px]">
+                        <DialogHeader>
+                            <DialogTitle>สร้างโปรเจกต์ใหม่</DialogTitle>
+                            <DialogDescription>
+                                เลือกวิธีการสร้างโปรเจกต์ของคุณ
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="bot-name" className="text-right">ชื่อโปรเจกต์</Label>
+                                <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
+                            </div>
+                        </div>
+                        <Tabs defaultValue="empty" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />ว่างเปล่า</TabsTrigger>
+                                <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
+                                <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="empty">
+                                 <Card>
+                                    <CardContent className="pt-6">
+                                        <div className="text-sm text-muted-foreground">
+                                            <p>สร้างโปรเจกต์ว่างเปล่า คุณจะต้องเพิ่มไฟล์เองในภายหลัง</p>
+                                        </div>
+                                         <DialogFooter className="mt-4">
+                                            <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
+                                                {isLoading['create'] ? 'กำลังสร้าง...' : 'สร้างโปรเจกต์ว่าง'}
+                                            </Button>
+                                        </DialogFooter>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="git">
+                                 <Card>
+                                    <CardContent className="pt-6 space-y-4">
+                                        <div>
+                                            <Label htmlFor="git-url">Git Repository URL</Label>
+                                            <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
+                                        </div>
+                                         <DialogFooter>
+                                            <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
+                                                {isLoading['create'] ? 'กำลังโคลน...' : 'โคลนโปรเจกต์'}
+                                            </Button>
+                                        </DialogFooter>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                            <TabsContent value="zip">
+                                 <Card>
+                                    <CardContent className="pt-6 space-y-4">
+                                        <div>
+                                            <Label htmlFor="zip-file">อัปโหลดไฟล์ .zip</Label>
+                                            <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
+                                                {isLoading['create'] ? 'กำลังอัปโหลด...' : 'สร้างจาก ZIP'}
+                                            </Button>
+                                        </DialogFooter>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                        {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <Card>
@@ -278,3 +392,5 @@ export default function BotsPage() {
         </div>
     );
 }
+
+    
