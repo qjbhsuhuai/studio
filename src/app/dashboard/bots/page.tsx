@@ -313,36 +313,30 @@ export default function BotsPage() {
                                     </TableCell>
                                     <TableCell>{bot.cpu || 'N/A'}</TableCell>
                                     <TableCell>{bot.memory ? `${bot.memory} MB` : 'N/A'}</TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" disabled={isLoading[bot.name]}>
-                                                    {isLoading[bot.name] ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div> : <MoreHorizontal className="h-4 w-4" />}
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}>
-                                                    {bot.status === 'running' ? <><StopCircle className="mr-2 h-4 w-4" /><span>Stop</span></> : <><Play className="mr-2 h-4 w-4" /><span>Start</span></>}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem asChild>
-                                                    <Link href={`/dashboard/bots/${bot.name}`}>
-                                                        <Terminal className="mr-2 h-4 w-4" />
-                                                        Manage
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                 <DropdownMenuItem onClick={() => openInstallDialog(bot.name)}>
-                                                    <Package className="mr-2 h-4 w-4" />
-                                                    <span>Install Dependencies</span>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-destructive" onClick={() => openDeleteDialog(bot.name)}>
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Delete</span>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                    <TableCell className="text-right space-x-2">
+                                        <Button 
+                                            size="sm"
+                                            variant={bot.status === 'running' ? 'destructive' : 'default'}
+                                            onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
+                                            disabled={isLoading[bot.name]}
+                                            className={bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                                        >
+                                            {bot.status === 'running' ? <StopCircle className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}
+                                            {bot.status === 'running' ? 'Stop' : 'Start'}
+                                        </Button>
+                                        <Button size="sm" variant="outline" asChild>
+                                            <Link href={`/dashboard/bots/${bot.name}`}>
+                                                <Terminal className="mr-1 h-4 w-4" />
+                                                Manage
+                                            </Link>
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => openInstallDialog(bot.name)}>
+                                            <Package className="mr-1 h-4 w-4" />
+                                            Install
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -397,4 +391,5 @@ export default function BotsPage() {
 
         </div>
     );
-}
+
+    
