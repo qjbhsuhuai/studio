@@ -39,28 +39,14 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const users = [
-  {
-    name: "User",
-    email: "user@example.com",
-    role: "Member",
-    avatar: "https://placehold.co/100x100.png",
-  },
-  {
-    name: "Admin",
-    email: "admin@example.com",
-    role: "Admin",
-    avatar: "https://placehold.co/100x100.png",
-  },
-  {
-    name: "Member",
-    email: "member@example.com",
-    role: "Member",
-    avatar: "https://placehold.co/100x100.png",
-  },
-]
+const users: any[] = []
 
-type User = (typeof users)[0]
+type User = {
+  name: string
+  email: string
+  role: string
+  avatar: string
+}
 
 export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
@@ -90,6 +76,13 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    ไม่มีผู้ใช้
+                  </TableCell>
+                </TableRow>
+              )}
               {users.map((user) => (
                 <TableRow key={user.email}>
                   <TableCell>

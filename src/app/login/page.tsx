@@ -46,7 +46,6 @@ export default function LoginPage() {
               <Label htmlFor="username">ชื่อผู้ใช้</Label>
               <Input
                 id="username"
-                placeholder="admin"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}

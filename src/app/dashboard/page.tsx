@@ -29,12 +29,12 @@ import {
 } from "@/components/ui/table"
 
 const chartData = [
-  { month: "มกราคม", cpu: 186, memory: 80 },
-  { month: "กุมภาพันธ์", cpu: 305, memory: 200 },
-  { month: "มีนาคม", cpu: 237, memory: 120 },
-  { month: "เมษายน", cpu: 73, memory: 190 },
-  { month: "พฤษภาคม", cpu: 209, memory: 130 },
-  { month: "มิถุนายน", cpu: 214, memory: 140 },
+  { month: "มกราคม", cpu: 0, memory: 0 },
+  { month: "กุมภาพันธ์", cpu: 0, memory: 0 },
+  { month: "มีนาคม", cpu: 0, memory: 0 },
+  { month: "เมษายน", cpu: 0, memory: 0 },
+  { month: "พฤษภาคม", cpu: 0, memory: 0 },
+  { month: "มิถุนายน", cpu: 0, memory: 0 },
 ]
 
 const chartConfig = {
@@ -48,13 +48,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const bots = [
-  { name: "AdminBot", type: "Discord", status: "ออนไลน์" },
-  { name: "WelcomeBot", type: "Discord", status: "ออนไลน์" },
-  { name: "MarketWatch", type: "Telegram", status: "ออฟไลน์" },
-  { name: "SupportAgent", type: "Custom", status: "ออนไลน์" },
-  { name: "GiveawayMaster", type: "Discord", status: "ผิดพลาด" },
-]
+const bots: any[] = []
 
 export default function DashboardPage() {
   return (
@@ -66,11 +60,11 @@ export default function DashboardPage() {
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">72%</div>
+            <div className="text-2xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
-              ความเสี่ยงดาวน์ไทม์: 0.02%
+              ความเสี่ยงดาวน์ไทม์: 0%
             </p>
-            <Progress value={72} className="mt-4 h-2" />
+            <Progress value={0} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
@@ -79,11 +73,11 @@ export default function DashboardPage() {
             <MemoryStick className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5.4 / 16 GB</div>
+            <div className="text-2xl font-bold">0 / 0 GB</div>
             <p className="text-xs text-muted-foreground">
-              ประสิทธิภาพคงที่
+              ไม่มีข้อมูล
             </p>
-            <Progress value={(5.4 / 16) * 100} className="mt-4 h-2" />
+            <Progress value={0} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
@@ -92,11 +86,11 @@ export default function DashboardPage() {
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">89 / 200 GB</div>
+            <div className="text-2xl font-bold">0 / 0 GB</div>
             <p className="text-xs text-muted-foreground">
-              ความเสี่ยงดาวน์ไทม์ต่ำ
+             ไม่มีข้อมูล
             </p>
-            <Progress value={(89 / 200) * 100} className="mt-4 h-2" />
+            <Progress value={0} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
@@ -105,11 +99,11 @@ export default function DashboardPage() {
             <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">99.98%</div>
+            <div className="text-2xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
-              42 วันโดยไม่มีเหตุการณ์
+              0 วันโดยไม่มีเหตุการณ์
             </p>
-            <Progress value={99.98} className="mt-4 h-2" />
+            <Progress value={0} className="mt-4 h-2" />
           </CardContent>
         </Card>
       </div>
@@ -132,6 +126,13 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {bots.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">
+                      ไม่มีบอท
+                    </TableCell>
+                  </TableRow>
+                )}
                 {bots.map((bot) => (
                   <TableRow key={bot.name}>
                     <TableCell className="font-medium">{bot.name}</TableCell>

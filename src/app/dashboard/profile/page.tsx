@@ -26,7 +26,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person avatar" />
+              <AvatarImage src="" data-ai-hint="person avatar" />
               <AvatarFallback>A</AvatarFallback>
             </Avatar>
             <div className="space-y-1">
@@ -36,11 +36,11 @@ export default function ProfilePage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">ชื่อ</Label>
-            <Input id="name" defaultValue="Admin" />
+            <Input id="name" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">อีเมล</Label>
-            <Input id="email" type="email" defaultValue="admin@example.com" disabled />
+            <Input id="email" type="email" disabled />
           </div>
            <div className="space-y-2">
             <Label htmlFor="current-password">รหัสผ่านปัจจุบัน</Label>
