@@ -128,10 +128,6 @@ export default function UsersPage() {
             จัดการผู้ใช้ทั้งหมดในระบบของคุณ
           </p>
         </div>
-        <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            เพิ่มผู้ใช้ใหม่
-        </Button>
       </div>
       <Card>
         <CardContent className="mt-6">
