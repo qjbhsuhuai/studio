@@ -1,9 +1,10 @@
+
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, ExternalLink, GitBranch, Upload, FileCode } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -46,6 +47,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
+
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -61,6 +64,7 @@ export default function BotsPage() {
     const [gitUrl, setGitUrl] = useState('');
     const [zipFile, setZipFile] = useState<File | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
+    const { toast } = useToast()
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -70,12 +74,11 @@ export default function BotsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ script: botName }),
             });
-            if (!res.ok) {
-                const errorData = await res.json();
-                alert(`เกิดข้อผิดพลาด: ${errorData.message}`);
-            }
-        } catch (err) {
-            alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err}`);
+            const data = await res.json();
+             if (!res.ok) throw new Error(data.message);
+            toast({ title: 'สำเร็จ', description: data.message });
+        } catch (err: any) {
+            toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
              setTimeout(() => {
                 mutate();
@@ -94,12 +97,11 @@ export default function BotsPage() {
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
             const res = await fetch(`/api/scripts/${selectedBot}`, { method: 'DELETE' });
-             if (!res.ok) {
-                const errorData = await res.json();
-                alert(`เกิดข้อผิดพลาด: ${errorData.message}`);
-            }
-        } catch (err) {
-             alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err}`);
+             const data = await res.json();
+             if (!res.ok) throw new Error(data.message);
+            toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
+        } catch (err:any) {
+             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
             mutate();
             setIsLoading(prev => ({ ...prev, [selectedBot]: false }));
@@ -117,18 +119,20 @@ export default function BotsPage() {
         if (!selectedBot || !moduleName) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
-             await fetch(`/api/install`, {
+             const res = await fetch(`/api/install`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ botName: selectedBot, module: moduleName }),
             });
-        } catch (err) {
-             alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err}`);
+             const data = await res.json();
+             if (!res.ok) throw new Error(data.message);
+             toast({ title: "ส่งคำสั่งแล้ว", description: data.message });
+        } catch (err: any) {
+             toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: 'destructive' });
         } finally {
             setIsLoading(prev => ({ ...prev, [selectedBot]: false }));
             setIsInstallDialogOpen(false);
             setModuleName('');
-            alert(`คำสั่งติดตั้ง '${moduleName}' ถูกส่งไปยังเซิร์ฟเวอร์แล้ว โปรดไปที่หน้าจัดการบอทเพื่อดูผลลัพธ์`);
         }
     };
 
@@ -154,7 +158,7 @@ export default function BotsPage() {
             if (!res.ok) {
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
-            alert('สร้างโปรเจกต์สำเร็จ!');
+            toast({ title: "สำเร็จ", description: result.message });
             setIsCreateDialogOpen(false);
             setNewBotName('');
             setGitUrl('');
@@ -166,56 +170,60 @@ export default function BotsPage() {
             setIsLoading(prev => ({ ...prev, create: false }));
         }
     };
+    
+    const { data: envData } = useSWR('/api/environment', fetcher);
+
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold">จัดการบอท</h1>
-                    <p className="text-muted-foreground">จัดการโปรเจกต์บอททั้งหมดของคุณที่นี่</p>
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <h1 className="text-lg font-semibold text-white">ทำงานบน: {envData?.detail || 'Loading...'}</h1>
+                    </div>
                 </div>
                  <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            สร้างโปรเจกต์ใหม่
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 fixed bottom-8 right-8 z-20 shadow-lg">
+                            <PlusCircle className="h-8 w-8" />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[525px]">
+                    <DialogContent className="sm:max-w-[525px] bg-card border-border">
                         <DialogHeader>
-                            <DialogTitle>สร้างโปรเจกต์ใหม่</DialogTitle>
+                            <DialogTitle>Create New Project</DialogTitle>
                             <DialogDescription>
-                                เลือกวิธีการสร้างโปรเจกต์ของคุณ
+                                Choose a method to create your project.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="bot-name" className="text-right">ชื่อโปรเจกต์</Label>
+                                <Label htmlFor="bot-name" className="text-right">Project Name</Label>
                                 <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
                             </div>
                         </div>
                         <Tabs defaultValue="empty" className="w-full">
                             <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />ว่างเปล่า</TabsTrigger>
+                                <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />Empty</TabsTrigger>
                                 <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
                                 <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
                             </TabsList>
                             <TabsContent value="empty">
-                                 <Card>
+                                 <Card className="bg-transparent border-0 shadow-none">
                                     <CardContent className="pt-6">
                                         <div className="text-sm text-muted-foreground">
-                                            <p>สร้างโปรเจกต์ว่างเปล่า คุณจะต้องเพิ่มไฟล์เองในภายหลัง</p>
+                                            <p>Create a blank project. You will need to add files later.</p>
                                         </div>
                                          <DialogFooter className="mt-4">
                                             <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
-                                                {isLoading['create'] ? 'กำลังสร้าง...' : 'สร้างโปรเจกต์ว่าง'}
+                                                {isLoading['create'] ? 'Creating...' : 'Create Project'}
                                             </Button>
                                         </DialogFooter>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                             <TabsContent value="git">
-                                 <Card>
+                                 <Card className="bg-transparent border-0 shadow-none">
                                     <CardContent className="pt-6 space-y-4">
                                         <div>
                                             <Label htmlFor="git-url">Git Repository URL</Label>
@@ -223,22 +231,22 @@ export default function BotsPage() {
                                         </div>
                                          <DialogFooter>
                                             <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
-                                                {isLoading['create'] ? 'กำลังโคลน...' : 'โคลนโปรเจกต์'}
+                                                {isLoading['create'] ? 'Cloning...' : 'Clone Project'}
                                             </Button>
                                         </DialogFooter>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                             <TabsContent value="zip">
-                                 <Card>
+                                 <Card className="bg-transparent border-0 shadow-none">
                                     <CardContent className="pt-6 space-y-4">
                                         <div>
-                                            <Label htmlFor="zip-file">อัปโหลดไฟล์ .zip</Label>
+                                            <Label htmlFor="zip-file">Upload .zip file</Label>
                                             <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
                                         </div>
                                         <DialogFooter>
                                             <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
-                                                {isLoading['create'] ? 'กำลังอัปโหลด...' : 'สร้างจาก ZIP'}
+                                                {isLoading['create'] ? 'Uploading...' : 'Create from ZIP'}
                                             </Button>
                                         </DialogFooter>
                                     </CardContent>
@@ -250,38 +258,37 @@ export default function BotsPage() {
                 </Dialog>
             </div>
 
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-lg border-border">
                 <CardHeader>
-                    <CardTitle>รายการบอท</CardTitle>
+                    <CardTitle>Projects</CardTitle>
                     <CardDescription>
-                        บอททั้งหมดที่มีอยู่ในระบบ
+                        All available projects in the system.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>สถานะ</TableHead>
-                                <TableHead>ชื่อ</TableHead>
-                                <TableHead>ประเภท</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Type</TableHead>
                                 <TableHead>CPU</TableHead>
                                 <TableHead>Memory</TableHead>
-                                <TableHead>Port</TableHead>
-                                <TableHead className="text-right">การกระทำ</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {error && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-destructive">
-                                        ไม่สามารถโหลดข้อมูลบอทได้
+                                    <TableCell colSpan={6} className="text-center text-destructive">
+                                        Could not load project data.
                                     </TableCell>
                                 </TableRow>
                             )}
                             {!data && !error && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center">
-                                        กำลังโหลด...
+                                    <TableCell colSpan={6} className="text-center">
+                                        Loading...
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -290,14 +297,14 @@ export default function BotsPage() {
                                     <TableCell>
                                         <Badge
                                             variant={bot.status === 'running' ? 'default' : 'secondary'}
-                                            className={bot.status === 'running' ? 'bg-green-500 hover:bg-green-600' : ''}
+                                            className={bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}
                                         >
                                             {bot.status === 'running' ? (
                                                 <CheckCircle className="mr-1 h-3 w-3" />
                                             ) : (
                                                 <XCircle className="mr-1 h-3 w-3" />
                                             )}
-                                            {bot.status === 'running' ? 'ออนไลน์' : 'ออฟไลน์'}
+                                            {bot.status === 'running' ? 'Online' : 'Offline'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="font-medium">{bot.name}</TableCell>
@@ -306,7 +313,6 @@ export default function BotsPage() {
                                     </TableCell>
                                     <TableCell>{bot.cpu || 'N/A'}</TableCell>
                                     <TableCell>{bot.memory ? `${bot.memory} MB` : 'N/A'}</TableCell>
-                                     <TableCell>{bot.port || 'N/A'}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -315,25 +321,25 @@ export default function BotsPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}>
-                                                    {bot.status === 'running' ? <><StopCircle className="mr-2 h-4 w-4" /><span>หยุด</span></> : <><Play className="mr-2 h-4 w-4" /><span>เริ่ม</span></>}
+                                                    {bot.status === 'running' ? <><StopCircle className="mr-2 h-4 w-4" /><span>Stop</span></> : <><Play className="mr-2 h-4 w-4" /><span>Start</span></>}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem asChild>
                                                     <Link href={`/dashboard/bots/${bot.name}`}>
-                                                        <ExternalLink className="mr-2 h-4 w-4" />
-                                                        จัดการบอท
+                                                        <Terminal className="mr-2 h-4 w-4" />
+                                                        Manage
                                                     </Link>
                                                 </DropdownMenuItem>
                                                  <DropdownMenuItem onClick={() => openInstallDialog(bot.name)}>
                                                     <Package className="mr-2 h-4 w-4" />
-                                                    <span>ติดตั้ง Dependencies</span>
+                                                    <span>Install Dependencies</span>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="text-destructive" onClick={() => openDeleteDialog(bot.name)}>
                                                     <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>ลบ</span>
+                                                    <span>Delete</span>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -346,45 +352,45 @@ export default function BotsPage() {
             </Card>
             
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <DialogContent>
+              <DialogContent className="bg-card border-border">
                 <DialogHeader>
-                  <DialogTitle>ยืนยันการลบ</DialogTitle>
+                  <DialogTitle>Confirm Deletion</DialogTitle>
                   <DialogDescription>
-                    คุณแน่ใจหรือไม่ว่าต้องการลบโปรเจกต์ '{selectedBot}'? การกระทำนี้ไม่สามารถย้อนกลับได้
+                    Are you sure you want to delete the project '{selectedBot}'? This action cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>ยกเลิก</Button>
-                  <Button variant="destructive" onClick={confirmDelete}>ยืนยันการลบ</Button>
+                  <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                  <Button variant="destructive" onClick={confirmDelete}>Confirm Delete</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
 
             <Dialog open={isInstallDialogOpen} onOpenChange={setIsInstallDialogOpen}>
-                <DialogContent>
+                <DialogContent className="bg-card border-border">
                     <DialogHeader>
-                        <DialogTitle>ติดตั้ง Dependencies สำหรับ '{selectedBot}'</DialogTitle>
+                        <DialogTitle>Install Dependencies for '{selectedBot}'</DialogTitle>
                         <DialogDescription>
-                            ระบุชื่อโมดูลที่ต้องการติดตั้ง (เช่น express, discord.js)
+                            Enter the name of the module to install (e.g., express, discord.js).
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                        <div className="grid grid-cols-4 items-center gap-4">
                          <Label htmlFor="module-name" className="text-right">
-                           ชื่อโมดูล
+                           Module
                          </Label>
                          <Input
                            id="module-name"
                            value={moduleName}
                            onChange={(e) => setModuleName(e.target.value)}
                            className="col-span-3"
-                           placeholder="เช่น discord.js"
+                           placeholder="e.g., discord.js"
                          />
                        </div>
                     </div>
                     <DialogFooter>
-                         <Button variant="outline" onClick={() => { setIsInstallDialogOpen(false); setModuleName(''); }}>ยกเลิก</Button>
-                         <Button onClick={confirmInstall}>ติดตั้ง</Button>
+                         <Button variant="outline" onClick={() => { setIsInstallDialogOpen(false); setModuleName(''); }}>Cancel</Button>
+                         <Button onClick={confirmInstall}>Install</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -392,5 +398,3 @@ export default function BotsPage() {
         </div>
     );
 }
-
-    
