@@ -1,19 +1,16 @@
 import { type ReactNode } from "react"
 import Link from "next/link"
-import { Bell, Bot, Home, LifeBuoy, Search, Settings2 } from "lucide-react"
+import { Bell, Bot, Home, Search } from "lucide-react"
 
 import {
   SidebarProvider,
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  SidebarTrigger,
   SidebarInset,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
-  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,11 +21,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/dashboard", icon: <Home />, label: "แดชบอร์ด" },
     { href: "/dashboard/bots", icon: <Bot />, label: "บอท" },
-  ]
-
-  const secondaryNavItems = [
-    { href: "#", icon: <Settings2 />, label: "ตั้งค่า" },
-    { href: "#", icon: <LifeBuoy />, label: "ช่วยเหลือ" },
   ]
 
   return (
@@ -54,21 +46,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="p-0">
-          <SidebarSeparator />
-          <SidebarMenu className="p-2">
-            {secondaryNavItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild>
-                  <Link href={item.href}>
-                    {item.icon}
-                    {item.label}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-card px-4 sm:h-[60px] sm:px-6">
