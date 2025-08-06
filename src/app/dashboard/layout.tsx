@@ -1,6 +1,6 @@
 import { type ReactNode } from "react"
 import Link from "next/link"
-import { Bell, Bot, Home, LifeBuoy, Search, Server, Settings2, BarChart2 } from "lucide-react"
+import { Bell, Bot, Home, LifeBuoy, Search, Server, Settings2, BarChart2, Users } from "lucide-react"
 
 import {
   SidebarProvider,
@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/dashboard", icon: <Home />, label: "Dashboard" },
     { href: "#", icon: <Bot />, label: "Bots" },
+    { href: "/dashboard/users", icon: <Users />, label: "Users" },
     { href: "#", icon: <Server />, label: "Servers" },
     { href: "#", icon: <BarChart2 />, label: "Usage" },
   ]
@@ -81,7 +82,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search bots..."
+                  placeholder="Search..."
                   className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                 />
               </div>
