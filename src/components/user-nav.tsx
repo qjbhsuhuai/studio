@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -23,7 +24,6 @@ export function UserNav() {
   const [username, setUsername] = useState<string | null>(null)
 
   useEffect(() => {
-    // Ensure this runs only on the client
     const storedUsername = localStorage.getItem("username")
     if (storedUsername) {
       setUsername(storedUsername)
@@ -65,20 +65,19 @@ export function UserNav() {
             โปรไฟล์
           </DropdownMenuItem>
           {isAdmin && (
-            <DropdownMenuItem onClick={() => router.push('/dashboard/users')}>
-              จัดการผู้ใช้
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onClick={() => router.push('/dashboard/users')}>
+                จัดการผู้ใช้
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                ตั้งค่าเซิร์ฟเวอร์
+              </DropdownMenuItem>
+            </>
           )}
-          <DropdownMenuItem>
-            การเรียกเก็บเงิน
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            ตั้งค่า
-          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => {
-          localStorage.removeItem('username');
+          localStorage.clear()
           router.push('/login');
         }}>
           ออกจากระบบ

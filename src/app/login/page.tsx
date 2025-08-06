@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -14,18 +15,73 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { get, ref } from "firebase/database"
+import { db } from "@/lib/firebase"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
   const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Store username for dashboard, differentiate between admin and user
-    localStorage.setItem("username", username)
-    router.push("/dashboard")
+    setIsLoading(true)
+
+    // Simplified admin check
+    if (username.toLowerCase() === 'admin' && password === 'admin') {
+      localStorage.setItem("username", "admin")
+      router.push("/dashboard")
+      return
+    }
+
+    try {
+      const userId = username.replace(/[.#$[\]]/g, "_")
+      const userRef = ref(db, 'users/' + userId);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        if (userData.password === password) {
+          localStorage.setItem("username", userData.email.split('@')[0]);
+          router.push("/dashboard");
+        } else {
+          toast({
+            title: "เข้าสู่ระบบไม่สำเร็จ",
+            description: "รหัสผ่านไม่ถูกต้อง",
+            variant: "destructive"
+          });
+        }
+      } else {
+         toast({
+            title: "เข้าสู่ระบบไม่สำเร็จ",
+            description: "ไม่พบชื่อผู้ใช้นี้ในระบบ",
+            variant: "destructive"
+          });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถเชื่อมต่อเพื่อเข้าสู่ระบบได้",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
+  
+    useEffect(() => {
+    const activeApiUrl = localStorage.getItem("activeApiUrl");
+    if (!activeApiUrl) {
+       localStorage.setItem("apiList", JSON.stringify([{id: "1", name: "Default Server", url: "https://cfgnnn-production.up.railway.app"}]));
+       localStorage.setItem("activeApiUrl", "https://cfgnnn-production.up.railway.app");
+    }
+  }, []);
+
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
@@ -49,6 +105,7 @@ export default function LoginPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -61,12 +118,19 @@ export default function LoginPage() {
                   ลืมรหัสผ่าน?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
-            <Button type="submit" className="w-full">
-              เข้าสู่ระบบ
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" disabled={isLoading}>
               <GoogleIcon className="mr-2 h-4 w-4" />
               เข้าสู่ระบบด้วย Google
             </Button>
