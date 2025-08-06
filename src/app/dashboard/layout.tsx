@@ -23,7 +23,7 @@ import { UserNav } from "@/components/user-nav"
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/dashboard", icon: <Home />, label: "แดชบอร์ด" },
-    { href: "#", icon: <Bot />, label: "บอท" },
+    { href: "/dashboard/bots", icon: <Bot />, label: "บอท" },
     { href: "/dashboard/users", icon: <Users />, label: "ผู้ใช้" },
     { href: "#", icon: <Server />, label: "เซิร์ฟเวอร์" },
     { href: "#", icon: <BarChart2 />, label: "การใช้งาน" },

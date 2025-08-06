@@ -1,7 +1,9 @@
 "use client"
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { Cpu, Database, MemoryStick, Timer } from "lucide-react"
+import { Cpu, Database, MemoryStick, Timer, Bot, CheckCircle, XCircle, Clock, Server } from "lucide-react"
+import useSWR from 'swr'
+import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,6 +30,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
 const chartData = [
   { month: "มกราคม", cpu: 0, memory: 0 },
   { month: "กุมภาพันธ์", cpu: 0, memory: 0 },
@@ -48,23 +52,42 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const bots: any[] = []
-
 export default function DashboardPage() {
+    const { data, error } = useSWR('/api/scripts', fetcher, { refreshInterval: 5000 });
+
+    const totalBots = data?.scripts?.length || 0;
+    const runningBots = data?.scripts?.filter((bot: any) => bot.status === 'running').length || 0;
+
+    const totalCpuUsage = data?.scripts?.reduce((acc: number, bot: any) => acc + (parseFloat(bot.cpu) || 0), 0) || 0;
+    const totalMemoryUsage = data?.scripts?.reduce((acc: number, bot: any) => acc + (parseFloat(bot.memory) || 0), 0) || 0;
+
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">บอททั้งหมด</CardTitle>
+            <Bot className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalBots}</div>
+            <p className="text-xs text-muted-foreground">
+              {runningBots} ตัวกำลังทำงาน
+            </p>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">การใช้งาน CPU</CardTitle>
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0%</div>
+            <div className="text-2xl font-bold">{totalCpuUsage.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
               ความเสี่ยงดาวน์ไทม์: 0%
             </p>
-            <Progress value={0} className="mt-4 h-2" />
+            <Progress value={totalCpuUsage} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
@@ -73,37 +96,26 @@ export default function DashboardPage() {
             <MemoryStick className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0 / 0 GB</div>
+            <div className="text-2xl font-bold">{totalMemoryUsage.toFixed(1)} MB</div>
             <p className="text-xs text-muted-foreground">
               ไม่มีข้อมูล
             </p>
             <Progress value={0} className="mt-4 h-2" />
           </CardContent>
         </Card>
-        <Card>
+         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">พื้นที่จัดเก็บ</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">สถานะเซิร์ฟเวอร์</CardTitle>
+            <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0 / 0 GB</div>
+             <div className="flex items-center gap-2 text-2xl font-bold">
+                <CheckCircle className="h-6 w-6 text-green-500" />
+                <span>ออนไลน์</span>
+            </div>
             <p className="text-xs text-muted-foreground">
-             ไม่มีข้อมูล
+              ทำงานปกติ
             </p>
-            <Progress value={0} className="mt-4 h-2" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">เวลาทำงาน</CardTitle>
-            <Timer className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0%</div>
-            <p className="text-xs text-muted-foreground">
-              0 วันโดยไม่มีเหตุการณ์
-            </p>
-            <Progress value={0} className="mt-4 h-2" />
           </CardContent>
         </Card>
       </div>
@@ -126,34 +138,54 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bots.length === 0 && (
+                {error && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center text-destructive">
+                            ไม่สามารถโหลดข้อมูลบอทได้
+                        </TableCell>
+                    </TableRow>
+                )}
+                {!data && !error && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center">
+                            กำลังโหลด...
+                        </TableCell>
+                    </TableRow>
+                )}
+                {data?.scripts.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
                       ไม่มีบอท
                     </TableCell>
                   </TableRow>
                 )}
-                {bots.map((bot) => (
+                {data?.scripts.map((bot: any) => (
                   <TableRow key={bot.name}>
                     <TableCell className="font-medium">{bot.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{bot.type}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge
+                       <Badge
                         variant={
-                          bot.status === "ออนไลน์"
+                          bot.status === "running"
                             ? "default"
-                            : bot.status === "ออฟไลน์"
-                            ? "secondary"
-                            : "destructive"
+                            : "secondary"
                         }
+                        className={bot.status === 'running' ? 'bg-green-500 hover:bg-green-600' : ''}
                       >
-                        {bot.status}
+                         {bot.status === "running" ? (
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                         ) : (
+                            <XCircle className="mr-1 h-3 w-3" />
+                         )}
+                        {bot.status === "running" ? "ออนไลน์" : "ออฟไลน์"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">จัดการ</Button>
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/dashboard/bots/${bot.name}`}>จัดการ</Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
