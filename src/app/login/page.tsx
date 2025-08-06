@@ -38,80 +38,78 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simplified admin check
-    if (loginInput.toLowerCase() === 'admin' && password === 'admin') {
-      toast({
-        title: "เข้าสู่ระบบสำเร็จ",
-        description: "ยินดีต้อนรับ, แอดมิน!",
-      })
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('userEmail', 'admin@example.com');
-      }
-      router.push("/dashboard")
-      setIsLoading(false)
-      return
-    }
-
     try {
-      const usersRef = ref(db, 'users/');
-      const snapshot = await get(usersRef);
-
-      if (snapshot.exists()) {
-        const usersData = snapshot.val();
-        let userFound = false;
-        let userData = null;
-
-        // Loop through all users to find a match by email or username
-        for (const key in usersData) {
-          const user = usersData[key];
-          const username = user.email?.split('@')[0];
-          if ((user.email.toLowerCase() === loginInput.toLowerCase() || (username && username.toLowerCase() === loginInput.toLowerCase())) && user.password === password) {
-            userFound = true;
-            userData = user;
-            break;
-          }
-        }
-
-        if (userFound && userData) {
-          if (userData.status === "Banned") {
+        // Simplified admin check
+        if (loginInput.toLowerCase() === 'admin' && password === 'admin') {
             toast({
-              title: "เข้าสู่ระบบไม่สำเร็จ",
-              description: "บัญชีของคุณถูกระงับการใช้งาน",
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "เข้าสู่ระบบสำเร็จ",
-              description: `ยินดีต้อนรับ, ${userData.firstName}!`,
+                title: "เข้าสู่ระบบสำเร็จ",
+                description: "ยินดีต้อนรับ, แอดมิน!",
             })
             if (typeof window !== 'undefined') {
-              sessionStorage.setItem('userEmail', userData.email);
+                sessionStorage.setItem('userEmail', 'admin@example.com');
             }
             router.push("/dashboard")
-          }
-        } else {
-           toast({
-            title: "เข้าสู่ระบบไม่สำเร็จ",
-            description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
-            variant: "destructive"
-          });
+            return
         }
-      } else {
-         toast({
-            title: "เข้าสู่ระบบไม่สำเร็จ",
-            description: "ไม่พบผู้ใช้ในระบบ",
-            variant: "destructive"
-          });
-      }
+
+        const usersRef = ref(db, 'users/');
+        const snapshot = await get(usersRef);
+
+        if (snapshot.exists()) {
+            const usersData = snapshot.val();
+            let userFound = false;
+            let userData = null;
+
+            for (const key in usersData) {
+                const user = usersData[key];
+                const username = user.email?.split('@')[0];
+                if ((user.email.toLowerCase() === loginInput.toLowerCase() || (username && username.toLowerCase() === loginInput.toLowerCase())) && user.password === password) {
+                    userFound = true;
+                    userData = user;
+                    break;
+                }
+            }
+
+            if (userFound && userData) {
+                if (userData.status === "Banned") {
+                    toast({
+                        title: "เข้าสู่ระบบไม่สำเร็จ",
+                        description: "บัญชีของคุณถูกระงับการใช้งาน",
+                        variant: "destructive"
+                    });
+                } else {
+                    toast({
+                        title: "เข้าสู่ระบบสำเร็จ",
+                        description: `ยินดีต้อนรับ, ${userData.firstName}!`,
+                    })
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('userEmail', userData.email);
+                    }
+                    router.push("/dashboard")
+                }
+            } else {
+                toast({
+                    title: "เข้าสู่ระบบไม่สำเร็จ",
+                    description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
+                    variant: "destructive"
+                });
+            }
+        } else {
+            toast({
+                title: "เข้าสู่ระบบไม่สำเร็จ",
+                description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
+                variant: "destructive"
+            });
+        }
     } catch (err) {
-      console.error(err);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเชื่อมต่อเพื่อเข้าสู่ระบบได้",
-        variant: "destructive"
-      });
+        console.error(err);
+        toast({
+            title: "เกิดข้อผิดพลาด",
+            description: "ไม่สามารถเชื่อมต่อเพื่อเข้าสู่ระบบได้",
+            variant: "destructive"
+        });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   }
 
