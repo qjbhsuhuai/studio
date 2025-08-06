@@ -75,18 +75,18 @@ export default function UsersPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle>การจัดการผู้ใช้</CardTitle>
           <CardDescription>
-            Manage all users in your system.
+            จัดการผู้ใช้ทั้งหมดในระบบของคุณ
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>ผู้ใช้</TableHead>
+                <TableHead>บทบาท</TableHead>
+                <TableHead className="text-right">การกระทำ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,11 +117,11 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleManageClick(user)}>
-                          Change Password
+                          เปลี่ยนรหัสผ่าน
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
+                        <DropdownMenuItem>ดูโปรไฟล์</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -135,15 +135,15 @@ export default function UsersPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Change password for {selectedUser.name}</DialogTitle>
+              <DialogTitle>เปลี่ยนรหัสผ่านสำหรับ {selectedUser.name}</DialogTitle>
               <DialogDescription>
-                Please enter the new password for {selectedUser.email}.
+                กรุณาป้อนรหัสผ่านใหม่สำหรับ {selectedUser.email}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="new-password" className="text-right">
-                  New Password
+                  รหัสผ่านใหม่
                 </Label>
                 <Input
                   id="new-password"
@@ -153,7 +153,7 @@ export default function UsersPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="confirm-password" className="text-right">
-                  Confirm Password
+                  ยืนยันรหัสผ่าน
                 </Label>
                 <Input
                   id="confirm-password"
@@ -164,9 +164,9 @@ export default function UsersPage() {
             </div>
             <DialogFooter>
               <Button onClick={() => setIsDialogOpen(false)} variant="outline">
-                Cancel
+                ยกเลิก
               </Button>
-              <Button onClick={() => setIsDialogOpen(false)}>Save</Button>
+              <Button onClick={() => setIsDialogOpen(false)}>บันทึก</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

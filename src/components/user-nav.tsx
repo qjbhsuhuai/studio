@@ -28,7 +28,7 @@ export function UserNav() {
   }, [])
 
   const isAdmin = username === "admin"
-  const userDisplay = isAdmin ? "Admin" : username
+  const userDisplay = isAdmin ? "แอดมิน" : username
   const userEmail = isAdmin ? "admin@example.com" : `${username?.toLowerCase()}@example.com`
 
   return (
@@ -53,18 +53,18 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-            Profile
+            โปรไฟล์
           </DropdownMenuItem>
           {isAdmin && (
             <DropdownMenuItem onClick={() => router.push('/dashboard/users')}>
-              Manage Users
+              จัดการผู้ใช้
             </DropdownMenuItem>
           )}
           <DropdownMenuItem>
-            Billing
+            การเรียกเก็บเงิน
           </DropdownMenuItem>
           <DropdownMenuItem>
-            Settings
+            ตั้งค่า
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -72,7 +72,7 @@ export function UserNav() {
           localStorage.removeItem('username');
           router.push('/login');
         }}>
-          Log out
+          ออกจากระบบ
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

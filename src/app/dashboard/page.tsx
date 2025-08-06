@@ -29,12 +29,12 @@ import {
 } from "@/components/ui/table"
 
 const chartData = [
-  { month: "January", cpu: 186, memory: 80 },
-  { month: "February", cpu: 305, memory: 200 },
-  { month: "March", cpu: 237, memory: 120 },
-  { month: "April", cpu: 73, memory: 190 },
-  { month: "May", cpu: 209, memory: 130 },
-  { month: "June", cpu: 214, memory: 140 },
+  { month: "มกราคม", cpu: 186, memory: 80 },
+  { month: "กุมภาพันธ์", cpu: 305, memory: 200 },
+  { month: "มีนาคม", cpu: 237, memory: 120 },
+  { month: "เมษายน", cpu: 73, memory: 190 },
+  { month: "พฤษภาคม", cpu: 209, memory: 130 },
+  { month: "มิถุนายน", cpu: 214, memory: 140 },
 ]
 
 const chartConfig = {
@@ -43,17 +43,17 @@ const chartConfig = {
     color: "hsl(var(--primary))",
   },
   memory: {
-    label: "Memory (GB)",
+    label: "หน่วยความจำ (GB)",
     color: "hsl(var(--accent))",
   },
 } satisfies ChartConfig
 
 const bots = [
-  { name: "AdminBot", type: "Discord", status: "Online" },
-  { name: "WelcomeBot", type: "Discord", status: "Online" },
-  { name: "MarketWatch", type: "Telegram", status: "Offline" },
-  { name: "SupportAgent", type: "Custom", status: "Online" },
-  { name: "GiveawayMaster", type: "Discord", status: "Error" },
+  { name: "AdminBot", type: "Discord", status: "ออนไลน์" },
+  { name: "WelcomeBot", type: "Discord", status: "ออนไลน์" },
+  { name: "MarketWatch", type: "Telegram", status: "ออฟไลน์" },
+  { name: "SupportAgent", type: "Custom", status: "ออนไลน์" },
+  { name: "GiveawayMaster", type: "Discord", status: "ผิดพลาด" },
 ]
 
 export default function DashboardPage() {
@@ -62,52 +62,52 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
+            <CardTitle className="text-sm font-medium">การใช้งาน CPU</CardTitle>
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">72%</div>
             <p className="text-xs text-muted-foreground">
-              Estimate: 0.02% downtime risk
+              ความเสี่ยงดาวน์ไทม์: 0.02%
             </p>
             <Progress value={72} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
+            <CardTitle className="text-sm font-medium">การใช้งานหน่วยความจำ</CardTitle>
             <MemoryStick className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5.4 / 16 GB</div>
             <p className="text-xs text-muted-foreground">
-              Stable performance
+              ประสิทธิภาพคงที่
             </p>
             <Progress value={(5.4 / 16) * 100} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage</CardTitle>
+            <CardTitle className="text-sm font-medium">พื้นที่จัดเก็บ</CardTitle>
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">89 / 200 GB</div>
             <p className="text-xs text-muted-foreground">
-              Low risk of downtime
+              ความเสี่ยงดาวน์ไทม์ต่ำ
             </p>
             <Progress value={(89 / 200) * 100} className="mt-4 h-2" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+            <CardTitle className="text-sm font-medium">เวลาทำงาน</CardTitle>
             <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">99.98%</div>
             <p className="text-xs text-muted-foreground">
-              42 days without incident
+              42 วันโดยไม่มีเหตุการณ์
             </p>
             <Progress value={99.98} className="mt-4 h-2" />
           </CardContent>
@@ -116,19 +116,19 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 md:gap-8 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader>
-            <CardTitle>Bot Hosting Panel</CardTitle>
+            <CardTitle>แผงควบคุมโฮสติ้งบอท</CardTitle>
             <CardDescription>
-              Manage your Discord, Telegram and other bots.
+              จัดการบอท Discord, Telegram และบอทอื่นๆ ของคุณ
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>ชื่อ</TableHead>
+                  <TableHead>ประเภท</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead className="text-right">การกระทำ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -141,9 +141,9 @@ export default function DashboardPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          bot.status === "Online"
+                          bot.status === "ออนไลน์"
                             ? "default"
-                            : bot.status === "Offline"
+                            : bot.status === "ออฟไลน์"
                             ? "secondary"
                             : "destructive"
                         }
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">Manage</Button>
+                      <Button variant="ghost" size="sm">จัดการ</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -162,9 +162,9 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Resource History</CardTitle>
+            <CardTitle>ประวัติการใช้ทรัพยากร</CardTitle>
             <CardDescription>
-              Usage estimate for the last 6 months.
+              ประมาณการใช้งานในช่วง 6 เดือนที่ผ่านมา
             </CardDescription>
           </CardHeader>
           <CardContent>

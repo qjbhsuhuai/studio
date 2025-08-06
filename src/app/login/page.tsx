@@ -35,15 +35,15 @@ export default function LoginPage() {
               <BotIcon className="h-8 w-8 text-primary" />
               <h1 className="text-2xl font-bold">BotFarm</h1>
             </div>
-          <CardTitle className="text-2xl font-bold">Login</CardTitle>
+          <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account
+            กรอกข้อมูลของคุณเพื่อเข้าสู่ระบบ
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">ชื่อผู้ใช้</Label>
               <Input
                 id="username"
                 placeholder="admin"
@@ -54,28 +54,28 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">รหัสผ่าน</Label>
                 <Link
                   href="#"
                   className="ml-auto inline-block text-sm underline"
                 >
-                  Forgot password?
+                  ลืมรหัสผ่าน?
                 </Link>
               </div>
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">
-              Login
+              เข้าสู่ระบบ
             </Button>
             <Button variant="outline" className="w-full">
               <GoogleIcon className="mr-2 h-4 w-4" />
-              Login with Google
+              เข้าสู่ระบบด้วย Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don't have an account?{" "}
+            ยังไม่มีบัญชี?{" "}
             <Link href="/signup" className="underline">
-              Sign up
+              สมัครสมาชิก
             </Link>
           </div>
         </CardContent>

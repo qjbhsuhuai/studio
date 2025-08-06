@@ -66,7 +66,7 @@ export default function SignupPage() {
             </Button>
             <Button variant="outline" className="w-full">
               <GoogleIcon className="mr-2 h-4 w-4" />
-              สมัครสมาชิกด้วย Google
+              สมัครด้วย Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
