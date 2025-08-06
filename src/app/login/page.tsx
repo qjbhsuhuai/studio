@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { get, ref } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
@@ -39,7 +39,6 @@ export default function LoginPage() {
         title: "เข้าสู่ระบบสำเร็จ",
         description: "ยินดีต้อนรับ, แอดมิน!",
       })
-      localStorage.setItem("username", "admin")
       router.push("/dashboard")
       setIsLoading(false)
       return
@@ -70,7 +69,6 @@ export default function LoginPage() {
             title: "เข้าสู่ระบบสำเร็จ",
             description: `ยินดีต้อนรับ, ${userData.firstName}!`,
           })
-          localStorage.setItem("username", userData.email.split('@')[0])
           router.push("/dashboard")
         } else {
            toast({

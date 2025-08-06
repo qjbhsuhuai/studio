@@ -17,19 +17,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 
 export function UserNav() {
   const router = useRouter()
-  const [username, setUsername] = useState<string | null>(null)
-
-  useEffect(() => {
-    const storedUsername = localStorage.getItem("username")
-    if (storedUsername) {
-      setUsername(storedUsername)
-    }
-  }, [])
-
+  // Mock user data, in a real app this would come from a context or a hook
+  const username = "admin"
   const isAdmin = username === "admin"
   const userDisplay = isAdmin ? "แอดมิน" : username
   const userEmail = username ? (isAdmin ? "admin@example.com" : `${username.toLowerCase()}@example.com`) : ""
@@ -76,10 +68,7 @@ export function UserNav() {
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => {
-          localStorage.clear()
-          router.push('/login');
-        }}>
+        <DropdownMenuItem onClick={() => router.push('/login')}>
           ออกจากระบบ
         </DropdownMenuItem>
       </DropdownMenuContent>

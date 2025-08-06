@@ -53,8 +53,6 @@ export default function SignupPage() {
         credits: 0 // Add starting credits
       });
       
-      // Store username for dashboard
-      localStorage.setItem("username", email.split('@')[0])
       toast({
         title: "สร้างบัญชีสำเร็จ",
         description: "บัญชีของคุณพร้อมใช้งานแล้ว กำลังนำคุณไปยังแดชบอร์ด",
