@@ -3,6 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,14 +17,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
 import { useState, useEffect } from "react"
-import { get, ref } from "firebase/database"
+import { get, ref, onValue } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
-  const [username, setUsername] = useState("")
+  const [loginInput, setLoginInput] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
@@ -32,33 +34,46 @@ export default function LoginPage() {
     setIsLoading(true)
 
     // Simplified admin check
-    if (username.toLowerCase() === 'admin' && password === 'admin') {
+    if (loginInput.toLowerCase() === 'admin' && password === 'admin') {
       localStorage.setItem("username", "admin")
       router.push("/dashboard")
       return
     }
 
     try {
-      const userId = username.replace(/[.#$[\]]/g, "_")
-      const userRef = ref(db, 'users/' + userId);
-      const snapshot = await get(userRef);
+      const usersRef = ref(db, 'users/');
+      const snapshot = await get(usersRef);
 
       if (snapshot.exists()) {
-        const userData = snapshot.val();
-        if (userData.password === password) {
+        const usersData = snapshot.val();
+        let userFound = false;
+        let userData = null;
+
+        // Loop through all users to find a match by email or username
+        for (const key in usersData) {
+          const user = usersData[key];
+          const username = user.email?.split('@')[0];
+          if ((user.email === loginInput || username === loginInput) && user.password === password) {
+            userFound = true;
+            userData = user;
+            break;
+          }
+        }
+
+        if (userFound && userData) {
           localStorage.setItem("username", userData.email.split('@')[0]);
           router.push("/dashboard");
         } else {
-          toast({
+           toast({
             title: "เข้าสู่ระบบไม่สำเร็จ",
-            description: "รหัสผ่านไม่ถูกต้อง",
+            description: "ชื่อผู้ใช้, อีเมล หรือรหัสผ่านไม่ถูกต้อง",
             variant: "destructive"
           });
         }
       } else {
          toast({
             title: "เข้าสู่ระบบไม่สำเร็จ",
-            description: "ไม่พบชื่อผู้ใช้นี้ในระบบ",
+            description: "ไม่พบผู้ใช้ในระบบ",
             variant: "destructive"
           });
       }
@@ -90,14 +105,14 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">อีเมล</Label>
+              <Label htmlFor="login-input">ชื่อผู้ใช้ หรือ อีเมล</Label>
               <Input
-                id="username"
-                type="email"
-                placeholder="m@example.com"
+                id="login-input"
+                type="text"
+                placeholder="ชื่อผู้ใช้ หรือ m@example.com"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={loginInput}
+                onChange={(e) => setLoginInput(e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -111,14 +126,24 @@ export default function LoginPage() {
                   ลืมรหัสผ่าน?
                 </Link>
               </div>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5 text-muted-foreground" /> : <Eye className="h-5 w-5 text-muted-foreground" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
