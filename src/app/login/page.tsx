@@ -44,6 +44,9 @@ export default function LoginPage() {
         title: "เข้าสู่ระบบสำเร็จ",
         description: "ยินดีต้อนรับ, แอดมิน!",
       })
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('userEmail', 'admin@example.com');
+      }
       router.push("/dashboard")
       setIsLoading(false)
       return
@@ -62,7 +65,7 @@ export default function LoginPage() {
         for (const key in usersData) {
           const user = usersData[key];
           const username = user.email?.split('@')[0];
-          if ((user.email.toLowerCase() === loginInput.toLowerCase() || username.toLowerCase() === loginInput.toLowerCase()) && user.password === password) {
+          if ((user.email.toLowerCase() === loginInput.toLowerCase() || (username && username.toLowerCase() === loginInput.toLowerCase())) && user.password === password) {
             userFound = true;
             userData = user;
             break;
@@ -74,6 +77,9 @@ export default function LoginPage() {
             title: "เข้าสู่ระบบสำเร็จ",
             description: `ยินดีต้อนรับ, ${userData.firstName}!`,
           })
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('userEmail', userData.email);
+          }
           router.push("/dashboard")
         } else {
            toast({
