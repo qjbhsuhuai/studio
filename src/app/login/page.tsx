@@ -27,7 +27,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,7 +114,10 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
-
+  
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
