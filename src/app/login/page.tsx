@@ -54,8 +54,10 @@ export default function LoginPage() {
           title: "เข้าสู่ระบบสำเร็จ",
           description: "ยินดีต้อนรับ, แอดมิน!",
         })
-        sessionStorage.setItem("userEmail", "admin@example.com")
-        router.push("/dashboard")
+        if (typeof window !== "undefined") {
+            sessionStorage.setItem("userEmail", "admin@example.com")
+            router.push("/dashboard")
+        }
         setIsLoading(false)
         return
       }
@@ -97,8 +99,10 @@ export default function LoginPage() {
               title: "เข้าสู่ระบบสำเร็จ",
               description: `ยินดีต้อนรับ, ${userData.firstName}!`,
             })
-            sessionStorage.setItem("userEmail", userData.email)
-            router.push("/dashboard")
+             if (typeof window !== "undefined") {
+                sessionStorage.setItem("userEmail", userData.email)
+                router.push("/dashboard")
+             }
           }
         } else {
            toast({
