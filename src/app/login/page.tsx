@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,42 +13,30 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CloudIcon, GoogleIcon } from "@/components/icons"
+import { BotIcon, GoogleIcon } from "@/components/icons"
 
 export default function LoginPage() {
   const router = useRouter()
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you'd have auth logic here.
-    // For this scaffold, we'll just navigate to the dashboard.
     router.push("/dashboard")
   }
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://placehold.co/1200x1200.png"
-          alt="Image"
-          width="1200"
-          height="1200"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-          data-ai-hint="abstract geometric"
-        />
-      </div>
-      <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[400px] gap-6">
-          <div className="grid gap-2 text-center">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <CloudIcon className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold">OVEZX CLOUD</h1>
+              <BotIcon className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl font-bold">BotFarm</h1>
             </div>
-            <CardTitle className="text-3xl font-bold">เข้าสู่ระบบ</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              กรอกอีเมลของคุณด้านล่างเพื่อเข้าสู่ระบบบัญชีของคุณ
-            </CardDescription>
-          </div>
+          <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
+          <CardDescription>
+            กรอกข้อมูลของคุณเพื่อเข้าสู่ระบบ
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">อีเมล</Label>
@@ -86,8 +73,8 @@ export default function LoginPage() {
               สมัครสมาชิก
             </Link>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
