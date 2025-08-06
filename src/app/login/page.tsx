@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, ShieldX } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +20,7 @@ import { useState, useEffect } from "react"
 import { get, ref } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -28,6 +29,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [isBanned, setIsBanned] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setIsBanned(false)
 
     try {
       // Admin hardcoded login
@@ -47,6 +50,7 @@ export default function LoginPage() {
         })
         sessionStorage.setItem("userEmail", "admin@example.com")
         router.push("/dashboard")
+        setIsLoading(false)
         return
       }
 
@@ -75,7 +79,8 @@ export default function LoginPage() {
 
         if (userFound && userData) {
            if (userData.status === "Banned") {
-             toast({
+            setIsBanned(true)
+            toast({
               title: "เข้าสู่ระบบไม่สำเร็จ",
               description: "บัญชีของคุณถูกระงับการใช้งาน",
               variant: "destructive",
@@ -121,7 +126,10 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className={cn(
+          "w-full max-w-md transition-all duration-500",
+          isBanned ? "border-destructive bg-destructive/10" : ""
+        )}>
         <CardHeader className="text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
             <BotIcon className="h-8 w-8 text-primary" />
@@ -131,60 +139,68 @@ export default function LoginPage() {
           <CardDescription>กรอกข้อมูลของคุณเพื่อเข้าสู่ระบบ</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="login-input">ชื่อผู้ใช้ หรือ อีเมล</Label>
-              <Input
-                id="login-input"
-                type="text"
-                placeholder="ชื่อผู้ใช้ หรือ m@example.com"
-                required
-                value={loginInput}
-                onChange={e => setLoginInput(e.target.value)}
-                disabled={isLoading}
-              />
+          {isBanned ? (
+            <div className="flex flex-col items-center justify-center text-center text-destructive p-4">
+                <ShieldX className="h-24 w-24 mb-4" />
+                <h2 className="text-2xl font-bold">บัญชีนี้ถูกระงับ</h2>
+                <p className="text-sm text-destructive/80">กรุณาติดต่อผู้ดูแลระบบ</p>
             </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">รหัสผ่าน</Label>
-                <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  ลืมรหัสผ่าน?
-                </Link>
-              </div>
-              <div className="relative">
+          ) : (
+            <form onSubmit={handleLogin} className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="login-input">ชื่อผู้ใช้ หรือ อีเมล</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
+                  id="login-input"
+                  type="text"
+                  placeholder="ชื่อผู้ใช้ หรือ m@example.com"
                   required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  value={loginInput}
+                  onChange={e => setLoginInput(e.target.value)}
                   disabled={isLoading}
-                  className="pr-10"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </button>
               </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
-            </Button>
-            <Button variant="outline" className="w-full" disabled={isLoading}>
-              <GoogleIcon className="mr-2 h-4 w-4" />
-              เข้าสู่ระบบด้วย Google
-            </Button>
-          </form>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">รหัสผ่าน</Label>
+                  <Link
+                    href="#"
+                    className="ml-auto inline-block text-sm underline"
+                  >
+                    ลืมรหัสผ่าน?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
+              </Button>
+              <Button variant="outline" className="w-full" disabled={isLoading}>
+                <GoogleIcon className="mr-2 h-4 w-4" />
+                เข้าสู่ระบบด้วย Google
+              </Button>
+            </form>
+          )}
           <div className="mt-4 text-center text-sm">
             ยังไม่มีบัญชี?{" "}
             <Link href="/signup" className="underline">
