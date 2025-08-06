@@ -28,14 +28,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  const [loggedInUsername, setLoggedInUsername] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (loggedInUsername) {
-      localStorage.setItem("username", loggedInUsername)
-      router.push("/dashboard")
-    }
-  }, [loggedInUsername, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,7 +39,8 @@ export default function LoginPage() {
         title: "เข้าสู่ระบบสำเร็จ",
         description: "ยินดีต้อนรับ, แอดมิน!",
       })
-      setLoggedInUsername("admin")
+      localStorage.setItem("username", "admin")
+      router.push("/dashboard")
       setIsLoading(false)
       return
     }
@@ -65,7 +58,7 @@ export default function LoginPage() {
         for (const key in usersData) {
           const user = usersData[key];
           const username = user.email?.split('@')[0];
-          if ((user.email === loginInput || username === loginInput) && user.password === password) {
+          if ((user.email.toLowerCase() === loginInput.toLowerCase() || username.toLowerCase() === loginInput.toLowerCase()) && user.password === password) {
             userFound = true;
             userData = user;
             break;
@@ -77,7 +70,8 @@ export default function LoginPage() {
             title: "เข้าสู่ระบบสำเร็จ",
             description: `ยินดีต้อนรับ, ${userData.firstName}!`,
           })
-          setLoggedInUsername(userData.email.split('@')[0])
+          localStorage.setItem("username", userData.email.split('@')[0])
+          router.push("/dashboard")
         } else {
            toast({
             title: "เข้าสู่ระบบไม่สำเร็จ",
