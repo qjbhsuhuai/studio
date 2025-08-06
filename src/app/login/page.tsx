@@ -47,6 +47,9 @@ export default function LoginPage() {
     setIsLoading(true)
     setIsBanned(false)
 
+    // A small delay to ensure the loading state is visible
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     try {
       // Admin hardcoded login
       if (loginInput.toLowerCase() === "admin" && password === "admin") {
@@ -58,8 +61,7 @@ export default function LoginPage() {
             sessionStorage.setItem("userEmail", "admin@example.com")
             router.push("/dashboard")
         }
-        setIsLoading(false)
-        return
+        return // Early return to not hit the finally block immediately
       }
 
       // Firebase user login
@@ -70,6 +72,7 @@ export default function LoginPage() {
         const usersData = snapshot.val()
         let userFound = false
         let userData = null
+        let foundKey = null
 
         for (const key in usersData) {
           const user = usersData[key]
@@ -81,6 +84,7 @@ export default function LoginPage() {
           ) {
             userFound = true
             userData = user
+            foundKey = key
             break
           }
         }
@@ -103,6 +107,7 @@ export default function LoginPage() {
                 sessionStorage.setItem("userEmail", userData.email)
                 router.push("/dashboard")
              }
+             return; // Early return to not hit the finally block immediately
           }
         } else {
            toast({
