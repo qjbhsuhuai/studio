@@ -87,11 +87,6 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
         </div>
-        <div className="flex items-center justify-center">
-             <Button asChild className="mt-8">
-                <Link href="/dashboard/bots">ไปที่หน้าจัดการโปรเจกต์</Link>
-            </Button>
-        </div>
     </>
   )
 }
