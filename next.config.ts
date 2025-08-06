@@ -22,7 +22,9 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3002/api/:path*', // Proxy to Backend
+        // Point to the default production server.
+        // The client-side will use the active URL from settings.
+        destination: 'https://cfgnnn-production.up.railway.app/api/:path*',
       },
     ]
   },

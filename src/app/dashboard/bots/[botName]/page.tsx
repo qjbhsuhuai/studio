@@ -23,9 +23,18 @@ export default function BotDetailPage({ params }: { params: { botName: string } 
             .then(data => setLogs(data.logs || 'ยังไม่มี Log สำหรับโปรเจกต์นี้\n'));
 
         // Setup WebSocket connection
+        // The WebSocket connection needs to point to the backend server,
+        // which might be different from the Next.js app's host.
+        // For now, we'll construct it based on the current window location,
+        // assuming the backend is proxied through the same host.
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}`; // Adjust if your WS server is elsewhere
-        ws.current = new WebSocket(wsUrl);
+        // Replace http/https with ws/wss for the WebSocket URL
+        const wsUrl = new URL(window.location.href);
+        wsUrl.protocol = wsProtocol;
+        wsUrl.pathname = ''; // Connect to the root for WebSocket handshake
+        
+        ws.current = new WebSocket(wsUrl.toString());
+
 
         ws.current.onopen = () => {
             console.log('WebSocket connected');
