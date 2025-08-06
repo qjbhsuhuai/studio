@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { BotIcon } from "@/components/icons"
+import { BotIcon, GoogleIcon } from "@/components/icons"
+import { Separator } from "@/components/ui/separator"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function SignupPage() {
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader className="text-center">
             <div className="mb-4 flex justify-center">
-                <BotIcon className="h-12 w-12 text-primary" />
+                <BotIcon className="h-10 w-10 text-primary" />
             </div>
           <CardTitle className="text-2xl font-bold">สร้างบัญชีใหม่</CardTitle>
           <CardDescription>
@@ -52,10 +53,19 @@ export default function SignupPage() {
               <Label htmlFor="password">รหัสผ่าน</Label>
               <Input id="password" type="password" required />
             </div>
-            <Button type="submit" className="w-full mt-2">
+            <Button type="submit" className="w-full">
               สมัครสมาชิก
             </Button>
           </form>
+          <div className="my-4 flex items-center">
+            <Separator className="flex-1" />
+            <span className="mx-4 text-xs text-muted-foreground">หรือ</span>
+            <Separator className="flex-1" />
+          </div>
+          <Button variant="outline" className="w-full">
+            <GoogleIcon className="mr-2 h-4 w-4" />
+            สมัครสมาชิกด้วย Google
+          </Button>
           <div className="mt-4 text-center text-sm">
             มีบัญชีอยู่แล้ว?{" "}
             <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">

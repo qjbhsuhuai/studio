@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { BotIcon } from "@/components/icons"
+import { BotIcon, GoogleIcon } from "@/components/icons"
+import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,19 +31,17 @@ export default function LoginPage() {
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
-            <div className="rounded-full bg-primary/10 p-2">
-                <BotIcon className="h-8 w-8 text-primary" />
-            </div>
+             <BotIcon className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">BotFarm</CardTitle>
+          <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
           <CardDescription>
-            Enter your credentials to access your bot dashboard.
+            เข้าสู่ระบบบัญชี BotFarm ของคุณ
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">อีเมล</Label>
               <Input
                 id="email"
                 type="email"
@@ -52,24 +51,33 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">รหัสผ่าน</Label>
                 <Link
                   href="#"
                   className="ml-auto inline-block text-sm text-primary underline-offset-4 hover:underline"
                 >
-                  Forgot password?
+                  ลืมรหัสผ่าน?
                 </Link>
               </div>
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">
-              Log in
+              เข้าสู่ระบบ
             </Button>
           </form>
+          <div className="my-4 flex items-center">
+            <Separator className="flex-1" />
+            <span className="mx-4 text-xs text-muted-foreground">หรือ</span>
+            <Separator className="flex-1" />
+          </div>
+          <Button variant="outline" className="w-full">
+            <GoogleIcon className="mr-2 h-4 w-4" />
+            เข้าสู่ระบบด้วย Google
+          </Button>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            ยังไม่มีบัญชี?{" "}
             <Link href="/signup" className="font-semibold text-primary underline-offset-4 hover:underline">
-              Sign up
+              สมัครสมาชิก
             </Link>
           </div>
         </CardContent>
