@@ -1,0 +1,4 @@
+{
+  "adminSecret": "admin_secret_key",
+  "defaultMaxProjects": 10
+}

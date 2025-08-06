@@ -2,77 +2,59 @@ import { type ReactNode } from "react"
 import Link from "next/link"
 import { Bell, Bot, Home, Search } from "lucide-react"
 
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BotIcon } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const navItems = [
-    { href: "/dashboard", icon: <Home />, label: "แดชบอร์ด" },
-    { href: "/dashboard/bots", icon: <Bot />, label: "บอท" },
-  ]
-
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Link href="/dashboard" className="flex items-center gap-2">
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6">
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          >
             <BotIcon className="h-7 w-7 text-primary" />
             <span className="text-xl font-semibold">BotFarm</span>
           </Link>
-        </SidebarHeader>
-        <SidebarContent className="p-0">
-          <SidebarMenu className="p-2">
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild>
-                  <Link href={item.href}>
-                    {item.icon}
-                    {item.label}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-card px-4 sm:h-[60px] sm:px-6">
-          <div className="w-full flex-1">
-            <form>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="ค้นหา..."
-                  className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                />
-              </div>
-            </form>
-          </div>
+          <Link
+            href="/dashboard"
+            className="text-foreground transition-colors hover:text-foreground"
+          >
+            แดชบอร์ด
+          </Link>
+          <Link
+            href="/dashboard/bots"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            บอท
+          </Link>
+        </nav>
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+          <form className="ml-auto flex-1 sm:flex-initial">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="ค้นหา..."
+                className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+              />
+            </div>
+          </form>
           <Button variant="ghost" size="icon" className="h-9 w-9">
             <Bell className="h-4 w-4" />
             <span className="sr-only">สลับการแจ้งเตือน</span>
           </Button>
           <UserNav />
-        </header>
-        <main className="flex flex-1 flex-col overflow-auto">
-            <div className="flex flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                {children}
-            </div>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col overflow-auto">
+        <div className="flex flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          {children}
+        </div>
+      </main>
+    </div>
   )
 }
