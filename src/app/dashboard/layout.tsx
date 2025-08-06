@@ -1,9 +1,8 @@
 import { type ReactNode } from "react"
 import Link from "next/link"
-import { Bell, Search } from "lucide-react"
+import { Bell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { BotIcon } from "@/components/icons"
 import { UserNav } from "@/components/user-nav"
 
@@ -19,16 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <span className="text-xl font-semibold">BotFarm</span>
         </Link>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-          <form className="ml-auto flex-1 sm:flex-initial">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="ค้นหา..."
-                className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
-              />
-            </div>
-          </form>
+          <div className="ml-auto flex-1 sm:flex-initial" />
           <Button variant="ghost" size="icon" className="h-9 w-9">
             <Bell className="h-4 w-4" />
             <span className="sr-only">สลับการแจ้งเตือน</span>
