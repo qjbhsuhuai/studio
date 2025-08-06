@@ -242,11 +242,6 @@ export default function BotDetailPage({ params }: { params: { botName: string } 
                         </Button>
                     </div>
                 </CardContent>
-                <div className="p-2 border-t border-border/50 bg-background/20 flex justify-around items-center">
-                    <Button variant="ghost" size="sm" onClick={() => setFileManagerOpen(true)}><FolderPlus className="h-5 w-5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => setCreateFileDialogOpen(true)}><FilePlus className="h-5 w-5" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setItemToDelete({ name: botName, path: '.' }); setDeleteDialogOpen(true); }}><Trash2 className="h-5 w-5 text-destructive" /></Button>
-                </div>
             </Card>
 
             {/* Dialogs */}
