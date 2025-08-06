@@ -14,12 +14,16 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
+import { useState } from "react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const [username, setUsername] = useState("")
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
+    // Store username for dashboard, differentiate between admin and user
+    localStorage.setItem("username", username)
     router.push("/dashboard")
   }
 
@@ -31,46 +35,47 @@ export default function LoginPage() {
               <BotIcon className="h-8 w-8 text-primary" />
               <h1 className="text-2xl font-bold">BotFarm</h1>
             </div>
-          <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
+          <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription>
-            กรอกข้อมูลของคุณเพื่อเข้าสู่ระบบ
+            Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">อีเมล</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
+                id="username"
+                placeholder="admin"
                 required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">รหัสผ่าน</Label>
+                <Label htmlFor="password">Password</Label>
                 <Link
                   href="#"
                   className="ml-auto inline-block text-sm underline"
                 >
-                  ลืมรหัสผ่าน?
+                  Forgot password?
                 </Link>
               </div>
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">
-              เข้าสู่ระบบ
+              Login
             </Button>
             <Button variant="outline" className="w-full">
               <GoogleIcon className="mr-2 h-4 w-4" />
-              เข้าสู่ระบบด้วย Google
+              Login with Google
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            ยังไม่มีบัญชี?{" "}
+            Don't have an account?{" "}
             <Link href="/signup" className="underline">
-              สมัครสมาชิก
+              Sign up
             </Link>
           </div>
         </CardContent>

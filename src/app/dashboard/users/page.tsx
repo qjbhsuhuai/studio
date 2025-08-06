@@ -41,19 +41,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const users = [
   {
-    name: "ผู้ใช้",
+    name: "User",
     email: "user@example.com",
     role: "Member",
     avatar: "https://placehold.co/100x100.png",
   },
   {
-    name: "ผู้ดูแลระบบ",
+    name: "Admin",
     email: "admin@example.com",
     role: "Admin",
     avatar: "https://placehold.co/100x100.png",
   },
   {
-    name: "สมาชิก",
+    name: "Member",
     email: "member@example.com",
     role: "Member",
     avatar: "https://placehold.co/100x100.png",
@@ -75,18 +75,18 @@ export default function UsersPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>จัดการผู้ใช้</CardTitle>
+          <CardTitle>User Management</CardTitle>
           <CardDescription>
-            จัดการผู้ใช้ทั้งหมดในระบบของคุณ
+            Manage all users in your system.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ผู้ใช้</TableHead>
-                <TableHead>ตำแหน่ง</TableHead>
-                <TableHead className="text-right">การกระทำ</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,11 +117,11 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleManageClick(user)}>
-                          เปลี่ยนรหัสผ่าน
+                          Change Password
                         </DropdownMenuItem>
-                        <DropdownMenuItem>ดูโปรไฟล์</DropdownMenuItem>
+                        <DropdownMenuItem>View Profile</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -135,15 +135,15 @@ export default function UsersPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>เปลี่ยนรหัสผ่านสำหรับ {selectedUser.name}</DialogTitle>
+              <DialogTitle>Change password for {selectedUser.name}</DialogTitle>
               <DialogDescription>
-                กรุณากรอกรหัสผ่านใหม่สำหรับผู้ใช้ {selectedUser.email}.
+                Please enter the new password for {selectedUser.email}.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="new-password" className="text-right">
-                  รหัสผ่านใหม่
+                  New Password
                 </Label>
                 <Input
                   id="new-password"
@@ -153,7 +153,7 @@ export default function UsersPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="confirm-password" className="text-right">
-                  ยืนยันรหัสผ่าน
+                  Confirm Password
                 </Label>
                 <Input
                   id="confirm-password"
@@ -164,9 +164,9 @@ export default function UsersPage() {
             </div>
             <DialogFooter>
               <Button onClick={() => setIsDialogOpen(false)} variant="outline">
-                ยกเลิก
+                Cancel
               </Button>
-              <Button onClick={() => setIsDialogOpen(false)}>บันทึก</Button>
+              <Button onClick={() => setIsDialogOpen(false)}>Save</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -16,11 +16,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export function UserNav() {
   const router = useRouter()
-  const userEmail = "admin@example.com" // ตัวอย่าง สมมติว่าผู้ใช้ที่ล็อกอินคือ admin
-  const isAdmin = userEmail === "admin@example.com"
+  const [username, setUsername] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Ensure this runs only on the client
+    setUsername(localStorage.getItem("username"))
+  }, [])
+
+  const isAdmin = username === "admin"
+  const userDisplay = isAdmin ? "Admin" : username
+  const userEmail = isAdmin ? "admin@example.com" : `${username?.toLowerCase()}@example.com`
 
   return (
     <DropdownMenu>
@@ -28,14 +37,14 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage src="https://placehold.co/100x100.png" alt="@user" data-ai-hint="person avatar" />
-            <AvatarFallback>A</AvatarFallback>
+            <AvatarFallback>{userDisplay?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">ผู้ดูแลระบบ</p>
+            <p className="text-sm font-medium leading-none">{userDisplay}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {userEmail}
             </p>
@@ -44,23 +53,26 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-            แก้ไขโปรไฟล์
+            Profile
           </DropdownMenuItem>
           {isAdmin && (
             <DropdownMenuItem onClick={() => router.push('/dashboard/users')}>
-              จัดการผู้ใช้
+              Manage Users
             </DropdownMenuItem>
           )}
           <DropdownMenuItem>
-            การเรียกเก็บเงิน
+            Billing
           </DropdownMenuItem>
           <DropdownMenuItem>
-            ตั้งค่า
+            Settings
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push('/login')}>
-          ออกจากระบบ
+        <DropdownMenuItem onClick={() => {
+          localStorage.removeItem('username');
+          router.push('/login');
+        }}>
+          Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
