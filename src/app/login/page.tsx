@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
 import { useState, useEffect } from "react"
-import { get, ref, onValue } from "firebase/database"
+import { get, ref } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 
@@ -28,6 +28,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const [loggedInUsername, setLoggedInUsername] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (loggedInUsername) {
+      localStorage.setItem("username", loggedInUsername)
+      router.push("/dashboard")
+    }
+  }, [loggedInUsername, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,12 +43,11 @@ export default function LoginPage() {
 
     // Simplified admin check
     if (loginInput.toLowerCase() === 'admin' && password === 'admin') {
-      localStorage.setItem("username", "admin")
-       toast({
+      toast({
         title: "เข้าสู่ระบบสำเร็จ",
         description: "ยินดีต้อนรับ, แอดมิน!",
       })
-      router.push("/dashboard")
+      setLoggedInUsername("admin")
       return
     }
 
@@ -65,12 +72,11 @@ export default function LoginPage() {
         }
 
         if (userFound && userData) {
-          localStorage.setItem("username", userData.email.split('@')[0]);
           toast({
             title: "เข้าสู่ระบบสำเร็จ",
             description: `ยินดีต้อนรับ, ${userData.firstName}!`,
           })
-          router.push("/dashboard");
+          setLoggedInUsername(userData.email.split('@')[0])
         } else {
            toast({
             title: "เข้าสู่ระบบไม่สำเร็จ",
