@@ -62,13 +62,13 @@ export default function LoginPage() {
               </div>
               <Input id="password" type="password" required />
             </div>
-            <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+            <Button type="submit" className="w-full">
               Log in
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="#" className="font-semibold text-primary underline-offset-4 hover:underline">
+            <Link href="/signup" className="font-semibold text-primary underline-offset-4 hover:underline">
               Sign up
             </Link>
           </div>
