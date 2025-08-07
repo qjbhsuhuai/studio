@@ -4,12 +4,11 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -22,14 +21,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -170,9 +161,6 @@ export default function BotsPage() {
             setIsLoading(prev => ({ ...prev, create: false }));
         }
     };
-    
-    const { data: envData } = useSWR('/api/environment', fetcher);
-
 
     return (
         <div className="space-y-6">
@@ -252,17 +240,16 @@ export default function BotsPage() {
 
             <Card className="bg-card/80 backdrop-blur-lg border-border">
                 <CardHeader>
-                    <CardTitle>Projects</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="py-2 px-2 md:px-4">Status</TableHead>
-                                <TableHead className="py-2 px-2 md:px-4">Name</TableHead>
-                                <TableHead className="hidden md:table-cell py-2 px-4">Type</TableHead>
-                                <TableHead className="hidden md:table-cell py-2 px-4">CPU</TableHead>
-                                <TableHead className="hidden md:table-cell py-2 px-4">Memory</TableHead>
+                                <TableHead className="py-2 px-2 md:px-4 text-xs md:text-sm">Status</TableHead>
+                                <TableHead className="py-2 px-2 md:px-4 text-xs md:text-sm">Name</TableHead>
+                                <TableHead className="hidden md:table-cell py-2 px-4 text-xs md:text-sm">Type</TableHead>
+                                <TableHead className="hidden md:table-cell py-2 px-4 text-xs md:text-sm">CPU</TableHead>
+                                <TableHead className="hidden md:table-cell py-2 px-4 text-xs md:text-sm">Memory</TableHead>
                                 <TableHead className="text-right py-2 px-2 md:px-4"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -282,11 +269,11 @@ export default function BotsPage() {
                                 </TableRow>
                             )}
                             {data?.scripts.map((bot: any) => (
-                                <TableRow key={bot.name}>
+                                <TableRow key={bot.name} className="text-xs md:text-sm">
                                     <TableCell className="py-2 px-2 md:px-4">
                                         <Badge
                                             variant={bot.status === 'running' ? 'default' : 'secondary'}
-                                            className={bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}
+                                            className={`text-xs ${bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}`}
                                         >
                                             {bot.status === 'running' ? (
                                                 <CheckCircle className="mr-1 h-3 w-3" />
@@ -298,33 +285,38 @@ export default function BotsPage() {
                                     </TableCell>
                                     <TableCell className="font-medium py-2 px-2 md:px-4 truncate max-w-24 md:max-w-xs">{bot.name}</TableCell>
                                     <TableCell className="hidden md:table-cell py-2 px-4">
-                                        <Badge variant="outline">{bot.type}</Badge>
+                                        <Badge variant="outline" className="text-xs">{bot.type}</Badge>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell py-2 px-4">{bot.cpu || 'N/A'}</TableCell>
                                     <TableCell className="hidden md:table-cell py-2 px-4">{bot.memory ? `${bot.memory} MB` : 'N/A'}</TableCell>
-                                    <TableCell className="text-right space-x-1 md:space-x-2 py-2 px-2 md:px-4">
+                                    <TableCell className="text-right space-x-1 py-2 px-2 md:px-4">
                                         <Button
                                             size="sm"
                                             variant={bot.status === 'running' ? 'destructive' : 'default'}
                                             onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
                                             disabled={isLoading[bot.name]}
-                                            className={bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                                            className={`h-7 px-2 text-xs ${bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
                                         >
-                                            {bot.status === 'running' ? <StopCircle className="h-4 w-4 md:mr-1" /> : <Play className="h-4 w-4 md:mr-1" />}
-                                            <span className="hidden md:inline">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
+                                            {bot.status === 'running' ? <StopCircle className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                                            <span className="hidden md:inline ml-1">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
                                         </Button>
-                                        <Button size="sm" variant="outline" asChild>
+                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" asChild>
                                             <Link href={`/dashboard/bots/${bot.name}`}>
-                                                <Terminal className="h-4 w-4 md:mr-1" />
-                                                <span className="hidden md:inline">Manage</span>
+                                                <Terminal className="h-3 w-3" />
+                                                <span className="hidden md:inline ml-1">Console</span>
                                             </Link>
                                         </Button>
-                                        <Button size="sm" variant="outline" onClick={() => openInstallDialog(bot.name)}>
-                                            <Package className="h-4 w-4 md:mr-1" />
-                                            <span className="hidden md:inline">Install</span>
+                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+                                             <Folder className="h-3 w-3" />
+                                             <span className="hidden md:inline ml-1">Files</span>
                                         </Button>
-                                        <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
-                                            <Trash2 className="h-4 w-4" />
+                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openInstallDialog(bot.name)}>
+                                            <Package className="h-3 w-3" />
+                                            <span className="hidden md:inline ml-1">Install</span>
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
+                                            <Trash2 className="h-3 w-3" />
+                                            <span className="hidden md:inline ml-1">Delete</span>
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -381,3 +373,5 @@ export default function BotsPage() {
         </div>
     );
 }
+
+    
