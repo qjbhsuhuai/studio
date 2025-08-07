@@ -15,11 +15,11 @@ import { usePathname } from 'next/navigation';
 function ConditionalLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Check if the current path is for a specific bot detail page
-  const isBotDetailPage = /^\/dashboard\/bots\/[^/]+$/.test(pathname || '');
+  // Check if the current path is for a specific bot detail page or file manager
+  const isSpecialPage = /^\/dashboard\/bots\/[^/]+(\/files)?$/.test(pathname || '');
 
-  if (isBotDetailPage) {
-    return <main className="flex-1 h-screen overflow-hidden">{children}</main>;
+  if (isSpecialPage) {
+    return <main className="flex-1 h-screen overflow-hidden bg-black">{children}</main>;
   }
 
   return (

@@ -306,9 +306,11 @@ export default function BotsPage() {
                                                 <span className="hidden md:inline ml-1">Console</span>
                                             </Link>
                                         </Button>
-                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
-                                             <Folder className="h-3 w-3" />
-                                             <span className="hidden md:inline ml-1">Files</span>
+                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" asChild>
+                                            <Link href={`/dashboard/bots/${bot.name}/files`}>
+                                                <Folder className="h-3 w-3" />
+                                                <span className="hidden md:inline ml-1">Files</span>
+                                            </Link>
                                         </Button>
                                         <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openInstallDialog(bot.name)}>
                                             <Package className="h-3 w-3" />
