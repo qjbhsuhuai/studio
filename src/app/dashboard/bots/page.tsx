@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2, Clock, Coins } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2, Clock, Coins, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -121,6 +121,35 @@ type BotProject = {
 };
 
 
+const creationLogs = [
+    "Initializing project...",
+    "Validating project name...",
+    "Allocating resources...",
+    "Setting up file structure...",
+    "Cloning repository...",
+    "Installing dependencies...",
+    "Configuring environment...",
+    "Finalizing setup...",
+    "Project created successfully!"
+];
+
+const CreationProgress = ({ logs }: { logs: string[] }) => {
+    return (
+        <div className="flex flex-col items-center justify-center p-8 space-y-6 bg-black rounded-lg min-h-[300px]">
+            <Loader2 className="h-12 w-12 text-primary animate-spin" />
+            <div className="w-full h-40 font-mono text-sm text-left overflow-hidden">
+                {logs.map((log, index) => (
+                    <p key={index} className="text-green-400 whitespace-pre-wrap animate-in fade-in">
+                        <span className="text-muted-foreground mr-2">$</span>{log}
+                    </p>
+                ))}
+            </div>
+            <p className="text-muted-foreground text-sm">Please wait, your project is being set up.</p>
+        </div>
+    );
+};
+
+
 export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const { data: apiData, error: apiError, mutate: mutateApi } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
@@ -131,6 +160,8 @@ export default function BotsPage() {
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({page: true});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [creationLogLines, setCreationLogLines] = useState<string[]>([]);
     const [selectedBot, setSelectedBot] = useState<string | null>(null);
     const [newBotName, setNewBotName] = useState('');
     const [gitUrl, setGitUrl] = useState('');
@@ -192,11 +223,6 @@ export default function BotsPage() {
 
     // Effect to merge Firebase bots with live API data
     useEffect(() => {
-        if (firebaseBots.length === 0 && !apiData?.scripts) {
-            setProjects([]);
-            return;
-        }
-
         const mergedProjects = firebaseBots.map(fbBot => {
             const apiInfo = apiData?.scripts?.find((s: any) => s.name === fbBot.name);
             return {
@@ -204,8 +230,7 @@ export default function BotsPage() {
                 status: apiInfo?.status || 'stopped',
                 cpu: apiInfo?.cpu || 'N/A',
                 memory: apiInfo?.memory || 'N/A',
-                // Prioritize Firebase expiresAt, but fallback to API if needed (should not happen in normal flow)
-                expiresAt: fbBot.expiresAt || apiInfo?.expiresAt,
+                expiresAt: fbBot.expiresAt, // Always prioritize Firebase for expiry
             };
         });
 
@@ -244,8 +269,10 @@ export default function BotsPage() {
         try {
             // 1. Delete script files from server via API first
             const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
+            if (!res.ok) {
+                 const data = await res.json().catch(() => ({ message: 'Failed to delete project files.' }));
+                 throw new Error(data.message);
+            }
             
             // 2. Delete the project data from Firebase
             const projectRef = ref(db, `bots/${userId}/${selectedBot}`);
@@ -276,6 +303,19 @@ export default function BotsPage() {
 
         setIsLoading(prev => ({ ...prev, create: true }));
         setCreateError(null);
+        setIsCreating(true);
+
+        // Animate logs
+        let logIndex = 0;
+        setCreationLogLines([]);
+        const logInterval = setInterval(() => {
+            setCreationLogLines(prev => [...prev, creationLogs[logIndex]]);
+            logIndex++;
+            if (logIndex >= creationLogs.length) {
+                clearInterval(logInterval);
+            }
+        }, 300);
+
 
         try {
             const userRef = ref(db, `users/${userId}`);
@@ -329,15 +369,20 @@ export default function BotsPage() {
             });
             
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
-            setIsCreateDialogOpen(false);
-            setNewBotName('');
-            setGitUrl('');
-            setZipFile(null);
-            setCreationDays(1);
+            
+            setTimeout(() => {
+                setIsCreateDialogOpen(false);
+                setNewBotName('');
+                setGitUrl('');
+                setZipFile(null);
+                setCreationDays(1);
+            }, 1000);
             
         } catch (err: any) {
             setCreateError(err.message);
         } finally {
+            clearInterval(logInterval);
+            setIsCreating(false);
             setIsLoading(prev => ({ ...prev, create: false }));
         }
     };
@@ -418,125 +463,131 @@ export default function BotsPage() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[525px] bg-card border-border">
                     <DialogHeader>
-                        <DialogTitle>จัดการโปรเจกต์</DialogTitle>
-                        <DialogDescription>
-                            เลือกวิธีการสร้างหรือเข้าร่วมโปรเจกต์
-                        </DialogDescription>
+                        <DialogTitle>{isCreating ? 'กำลังสร้างโปรเจกต์...' : 'จัดการโปรเจกต์'}</DialogTitle>
+                         {!isCreating && (
+                            <DialogDescription>
+                                เลือกวิธีการสร้างหรือเข้าร่วมโปรเจกต์
+                            </DialogDescription>
+                         )}
                     </DialogHeader>
                     
-                    <Tabs defaultValue="create" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="create">สร้างโปรเจกต์ใหม่</TabsTrigger>
-                            <TabsTrigger value="join">เข้าร่วมโปรเจกต์</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="create">
-                             <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="bot-name" className="text-right">ชื่อโปรเจกต์</Label>
-                                    <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
-                                </div>
-                                <div className="grid grid-cols-4 items-start gap-4 pt-2">
-                                    <Label className="text-right pt-2">ระยะเวลา</Label>
-                                    <div className="col-span-3 space-y-3">
-                                        <Slider
-                                            value={[creationDays]}
-                                            onValueChange={(value) => setCreationDays(value[0])}
-                                            min={1}
-                                            max={30}
-                                            step={1}
-                                            disabled={!newBotName}
-                                        />
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-medium text-primary">{creationDays} วัน</span>
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <span>ค่าใช้จ่าย: {totalCost}</span>
-                                                <Coins className="h-4 w-4" />
+                    {isCreating ? (
+                        <CreationProgress logs={creationLogLines} />
+                    ) : (
+                        <Tabs defaultValue="create" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="create">สร้างโปรเจกต์ใหม่</TabsTrigger>
+                                <TabsTrigger value="join">เข้าร่วมโปรเจกต์</TabsTrigger>
+                            </TabsList>
+                            
+                            <TabsContent value="create">
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="bot-name" className="text-right">ชื่อโปรเจกต์</Label>
+                                        <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-start gap-4 pt-2">
+                                        <Label className="text-right pt-2">ระยะเวลา</Label>
+                                        <div className="col-span-3 space-y-3">
+                                            <Slider
+                                                value={[creationDays]}
+                                                onValueChange={(value) => setCreationDays(value[0])}
+                                                min={1}
+                                                max={30}
+                                                step={1}
+                                                disabled={!newBotName}
+                                            />
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-medium text-primary">{creationDays} วัน</span>
+                                                <div className="flex items-center gap-2 text-muted-foreground">
+                                                    <span>ค่าใช้จ่าย: {totalCost}</span>
+                                                    <Coins className="h-4 w-4" />
+                                                </div>
                                             </div>
-                                        </div>
-                                         <div className={`text-xs p-2 rounded-md ${hasEnoughCredits ? 'bg-green-500/10 text-green-400' : 'bg-destructive/10 text-destructive'}`}>
-                                            เครดิตของคุณ: {currentUser?.credits ?? 0}
+                                            <div className={`text-xs p-2 rounded-md ${hasEnoughCredits ? 'bg-green-500/10 text-green-400' : 'bg-destructive/10 text-destructive'}`}>
+                                                เครดิตของคุณ: {currentUser?.credits ?? 0}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <Tabs defaultValue="empty" className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
-                                    <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />ว่างเปล่า</TabsTrigger>
-                                    <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
-                                    <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="empty">
-                                     <Card className="bg-transparent border-0 shadow-none">
-                                        <CardContent className="pt-6">
-                                            <div className="text-sm text-muted-foreground">
-                                                <p>สร้างโปรเจกต์เปล่า คุณจะต้องเพิ่มไฟล์ในภายหลัง</p>
-                                            </div>
-                                             <DialogFooter className="mt-4">
-                                                <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName || !hasEnoughCredits}>
-                                                    {isLoading['create'] ? 'กำลังสร้าง...' : 'สร้างโปรเจกต์'}
-                                                </Button>
-                                            </DialogFooter>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                                <TabsContent value="git">
-                                     <Card className="bg-transparent border-0 shadow-none">
-                                        <CardContent className="pt-6 space-y-4">
-                                            <div>
-                                                <Label htmlFor="git-url">Git Repository URL</Label>
-                                                <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
-                                            </div>
-                                             <DialogFooter>
-                                                <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl || !hasEnoughCredits}>
-                                                    {isLoading['create'] ? 'กำลังโคลน...' : 'โคลนโปรเจกต์'}
-                                                </Button>
-                                            </DialogFooter>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                                <TabsContent value="zip">
-                                     <Card className="bg-transparent border-0 shadow-none">
-                                        <CardContent className="pt-6 space-y-4">
-                                            <div>
-                                                <Label htmlFor="zip-file">อัปโหลดไฟล์ .zip</Label>
-                                                <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
-                                            </div>
-                                            <DialogFooter>
-                                                <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile || !hasEnoughCredits}>
-                                                    {isLoading['create'] ? 'กำลังอัปโหลด...' : 'สร้างจาก ZIP'}
-                                                </Button>
-                                            </DialogFooter>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                            </Tabs>
-                             {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
-                        </TabsContent>
+                                <Tabs defaultValue="empty" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />ว่างเปล่า</TabsTrigger>
+                                        <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
+                                        <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="empty">
+                                        <Card className="bg-transparent border-0 shadow-none">
+                                            <CardContent className="pt-6">
+                                                <div className="text-sm text-muted-foreground">
+                                                    <p>สร้างโปรเจกต์เปล่า คุณจะต้องเพิ่มไฟล์ในภายหลัง</p>
+                                                </div>
+                                                <DialogFooter className="mt-4">
+                                                    <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName || !hasEnoughCredits}>
+                                                        {isLoading['create'] ? 'กำลังสร้าง...' : 'สร้างโปรเจกต์'}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+                                    <TabsContent value="git">
+                                        <Card className="bg-transparent border-0 shadow-none">
+                                            <CardContent className="pt-6 space-y-4">
+                                                <div>
+                                                    <Label htmlFor="git-url">Git Repository URL</Label>
+                                                    <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
+                                                </div>
+                                                <DialogFooter>
+                                                    <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl || !hasEnoughCredits}>
+                                                        {isLoading['create'] ? 'กำลังโคลน...' : 'โคลนโปรเจกต์'}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+                                    <TabsContent value="zip">
+                                        <Card className="bg-transparent border-0 shadow-none">
+                                            <CardContent className="pt-6 space-y-4">
+                                                <div>
+                                                    <Label htmlFor="zip-file">อัปโหลดไฟล์ .zip</Label>
+                                                    <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
+                                                </div>
+                                                <DialogFooter>
+                                                    <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile || !hasEnoughCredits}>
+                                                        {isLoading['create'] ? 'กำลังอัปโหลด...' : 'สร้างจาก ZIP'}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+                                </Tabs>
+                                {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
+                            </TabsContent>
 
-                        <TabsContent value="join">
-                             <Card className="bg-transparent border-0 shadow-none">
-                                <CardContent className="pt-6 space-y-4">
-                                    <div>
-                                        <Label htmlFor="project-uid">Project UID</Label>
-                                        <Input 
-                                            id="project-uid" 
-                                            value={projectUid} 
-                                            onChange={e => setProjectUid(e.target.value)} 
-                                            placeholder="วาง Project UID ที่นี่" 
-                                        />
-                                        <p className="text-xs text-muted-foreground mt-2">ขอ UID จากเจ้าของโปรเจกต์เพื่อส่งคำขอเข้าร่วม</p>
-                                    </div>
-                                     <DialogFooter>
-                                        <Button type="button" onClick={handleJoinProject} disabled={isLoading['join'] || !projectUid}>
-                                            {isLoading['join'] ? 'กำลังส่งคำขอ...' : 'เข้าร่วมโปรเจกต์'}
-                                        </Button>
-                                     </DialogFooter>
-                                     {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
+                            <TabsContent value="join">
+                                <Card className="bg-transparent border-0 shadow-none">
+                                    <CardContent className="pt-6 space-y-4">
+                                        <div>
+                                            <Label htmlFor="project-uid">Project UID</Label>
+                                            <Input 
+                                                id="project-uid" 
+                                                value={projectUid} 
+                                                onChange={e => setProjectUid(e.target.value)} 
+                                                placeholder="วาง Project UID ที่นี่" 
+                                            />
+                                            <p className="text-xs text-muted-foreground mt-2">ขอ UID จากเจ้าของโปรเจกต์เพื่อส่งคำขอเข้าร่วม</p>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="button" onClick={handleJoinProject} disabled={isLoading['join'] || !projectUid}>
+                                                {isLoading['join'] ? 'กำลังส่งคำขอ...' : 'เข้าร่วมโปรเจกต์'}
+                                            </Button>
+                                        </DialogFooter>
+                                        {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    )}
                 </DialogContent>
             </Dialog>
 
@@ -644,3 +695,5 @@ export default function BotsPage() {
         </div>
     );
 }
+
+    
