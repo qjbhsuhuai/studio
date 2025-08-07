@@ -60,15 +60,24 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
-        if (!expiryTimestamp) return;
+        if (!expiryTimestamp) {
+            setTimeLeft(null);
+            return;
+        };
+        
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
+        // Set initial value
+        setTimeLeft(calculateTimeLeft());
+
         return () => clearInterval(timer);
     }, [expiryTimestamp]);
 
-    if (!timeLeft) return null;
+    if (!timeLeft) {
+        return <span className="font-mono text-muted-foreground">N/A</span>;
+    }
     
     if (timeLeft.expired) {
         return <span className="text-muted-foreground">หมดอายุ</span>;
@@ -122,7 +131,6 @@ export default function BotsPage() {
     const [createError, setCreateError] = useState<string | null>(null);
     const { toast } = useToast();
     
-    // New states for project creation with credits
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [creationDays, setCreationDays] = useState(1);
     const CREDITS_PER_DAY = 4;
@@ -135,7 +143,6 @@ export default function BotsPage() {
             const id = userEmail.replace(/[.#$[\]]/g, "_");
             setUserId(id);
 
-            // Fetch current user data for credits
             const userRef = ref(db, `users/${id}`);
             const listener = onValue(userRef, (snapshot) => {
                 if (snapshot.exists()) {
@@ -144,8 +151,6 @@ export default function BotsPage() {
             });
             return () => off(userRef, 'value', listener);
 
-        } else {
-            // Handle case where user is not logged in
         }
     }, []);
 
@@ -153,14 +158,17 @@ export default function BotsPage() {
         if (!userId) return;
 
         setIsLoading(prev => ({ ...prev, page: true }));
+
         const userBotsRef = ref(db, `bots/${userId}`);
 
         const listener = onValue(userBotsRef, (snapshot) => {
             const botData = snapshot.val();
-            const ownedBots = botData ? Object.keys(botData) : [];
+            const ownedBotNames = botData ? Object.keys(botData) : [];
             
-            const botList: BotProject[] = ownedBots.map(botName => {
-                const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
+            const apiScripts = apiData?.scripts || [];
+
+            const mergedProjects: BotProject[] = ownedBotNames.map(botName => {
+                const apiInfo = apiScripts.find((s: any) => s.name === botName);
                 return {
                     name: botName,
                     status: apiInfo?.status || 'stopped',
@@ -171,7 +179,7 @@ export default function BotsPage() {
                 };
             });
             
-            setProjects(botList);
+            setProjects(mergedProjects);
             setIsLoading(prev => ({ ...prev, page: false }));
         });
         
@@ -208,7 +216,6 @@ export default function BotsPage() {
         if (!selectedBot || !userId) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
-            // Updated to delete from Firebase as well
             const projectRef = ref(db, `bots/${userId}/${selectedBot}`);
             await set(projectRef, null);
 
@@ -241,7 +248,6 @@ export default function BotsPage() {
         setCreateError(null);
 
         try {
-            // --- Credit Deduction Logic ---
             const userRef = ref(db, `users/${userId}`);
             const snapshot = await get(userRef);
 
@@ -257,14 +263,11 @@ export default function BotsPage() {
 
             const newCredits = currentCredits - totalCost;
             
-            // --- End Credit Deduction Logic ---
-
-
             const formData = new FormData();
             formData.append('botName', newBotName);
             formData.append('creationMethod', creationMethod);
             formData.append('userId', userId);
-            formData.append('days', creationDays.toString()); // Send days to backend
+            formData.append('days', creationDays.toString()); 
 
             if (creationMethod === 'git') {
                 formData.append('gitUrl', gitUrl);
@@ -278,15 +281,11 @@ export default function BotsPage() {
             });
             const result = await res.json();
             if (!res.ok) {
-                // Do NOT roll back credit deduction on failure, let backend handle it if needed
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
 
-            // Deduct credits only on successful project creation from API
             await update(userRef, { credits: newCredits });
 
-
-            // Also create settings in Firebase
             const settingsRef = ref(db, `bots/${userId}/${newBotName}/settings`);
             const newUid = `uid-${newBotName}-${Date.now()}`;
             await set(settingsRef, {
@@ -333,7 +332,6 @@ export default function BotsPage() {
             let ownerId = null;
             let botName = null;
 
-            // Search for the project with the matching UID
             for (const uId in allBots) {
                 for (const bName in allBots[uId]) {
                     const settings = allBots[uId][bName].settings;
@@ -355,13 +353,12 @@ export default function BotsPage() {
                 throw new Error("โปรเจกต์นี้ไม่ได้เปิดการแชร์");
             }
 
-            // Project found, send a join request
             const requestsRef = ref(db, `bots/${ownerId}/${botName}/requests`);
             const newRequestRef = push(requestsRef);
             await set(newRequestRef, {
                 userId: userId,
                 userEmail: currentUserEmail,
-                status: 'pending' // pending, approved, rejected
+                status: 'pending' 
             });
 
             toast({
@@ -503,7 +500,7 @@ export default function BotsPage() {
                                         <Button type="button" onClick={handleJoinProject} disabled={isLoading['join'] || !projectUid}>
                                             {isLoading['join'] ? 'กำลังส่งคำขอ...' : 'เข้าร่วมโปรเจกต์'}
                                         </Button>
-                                    </DialogFooter>
+                                     </DialogFooter>
                                      {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
                                 </CardContent>
                             </Card>
@@ -547,12 +544,10 @@ export default function BotsPage() {
                                 <span className="font-semibold truncate">{bot.name}</span>
                             </div>
                              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                                 {bot.expiresAt && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Clock className="h-3 w-3" />
-                                        <TimeLeftDisplay expiryTimestamp={bot.expiresAt} />
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="h-3 w-3" />
+                                    <TimeLeftDisplay expiryTimestamp={bot.expiresAt} />
+                                </div>
                                 <div className="flex items-center gap-1.5">
                                     <CpuIcon className="h-3 w-3" />
                                     <span>{bot.cpu || 'N/A'}</span>
