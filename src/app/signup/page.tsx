@@ -4,7 +4,8 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { ref, set } from "firebase/database"
+import { ref, set, get } from "firebase/database"
+import { Github } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,8 +18,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BotIcon, GoogleIcon } from "@/components/icons"
-import { db } from "@/lib/firebase"
+import { db, auth } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
+import { 
+    signInWithPopup, 
+    GoogleAuthProvider,
+    GithubAuthProvider
+} from "firebase/auth"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -35,6 +41,67 @@ export default function SignupPage() {
     setIsClient(true)
   }, [])
 
+  const handleSuccessfulLogin = (email: string, name: string) => {
+      toast({
+          title: "เข้าสู่ระบบสำเร็จ",
+          description: `ยินดีต้อนรับ, ${name}!`,
+      });
+      if (typeof window !== "undefined") {
+          sessionStorage.setItem("userEmail", email);
+          router.push("/dashboard");
+      }
+  };
+
+  const handleSocialLogin = async (provider: GoogleAuthProvider | GithubAuthProvider) => {
+    setIsLoading(true);
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        if (!user.email) {
+            throw new Error("ไม่สามารถเข้าสู่ระบบได้เนื่องจากไม่มีอีเมล");
+        }
+        
+        const userId = user.email.replace(/[.#$[\]]/g, "_");
+        const userRef = ref(db, `users/${userId}`);
+        const snapshot = await get(userRef);
+
+        if (snapshot.exists()) {
+             const userData = snapshot.val();
+             if (userData.status === "Banned") {
+                 toast({
+                     title: "เข้าสู่ระบบไม่สำเร็จ",
+                     description: "บัญชีของคุณถูกระงับการใช้งาน",
+                     variant: "destructive",
+                 });
+             } else {
+                 handleSuccessfulLogin(userData.email, userData.firstName || user.displayName || 'User');
+             }
+        } else {
+            // New user via social login, create DB entry
+            const nameParts = user.displayName?.split(" ") || ["User"];
+            const newUser = {
+                firstName: nameParts[0],
+                lastName: nameParts.slice(1).join(" ") || "",
+                email: user.email,
+                role: 'User',
+                credits: 0,
+                status: "Active"
+            };
+            await set(userRef, newUser);
+            handleSuccessfulLogin(newUser.email, newUser.firstName);
+        }
+    } catch (error: any) {
+        toast({
+            title: "เข้าสู่ระบบไม่สำเร็จ",
+            description: error.message || "เกิดข้อผิดพลาดในการล็อกอินด้วยโซเชียล",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  }
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -47,15 +114,23 @@ export default function SignupPage() {
     }
 
     try {
-      // Use email as a key, replacing invalid characters
       const userId = email.replace(/[.#$[\]]/g, "_");
-      await set(ref(db, 'users/' + userId), {
+      const userRef = ref(db, 'users/' + userId);
+      
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+          setError("อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่นหรือเข้าสู่ระบบ");
+          setIsLoading(false);
+          return;
+      }
+
+      await set(userRef, {
         firstName,
         lastName,
         email,
-        password, // Note: Storing plain text passwords is not secure. Use Firebase Authentication.
+        password, 
         role: email.toLowerCase() === 'admin@example.com' ? 'Admin' : 'User',
-        credits: 0, // Add starting credits
+        credits: 0, 
         status: "Active"
       });
       
@@ -153,11 +228,27 @@ export default function SignupPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'กำลังสร้างบัญชี...' : 'สร้างบัญชี'}
             </Button>
-            <Button variant="outline" className="w-full" disabled={isLoading}>
-              <GoogleIcon className="mr-2 h-4 w-4" />
-              สมัครด้วย Google
-            </Button>
           </form>
+            <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                        หรือสมัครด้วย
+                    </span>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" className="w-full" disabled={isLoading} onClick={() => handleSocialLogin(new GoogleAuthProvider())}>
+                    <GoogleIcon className="mr-2 h-4 w-4" />
+                    Google
+                </Button>
+                 <Button variant="outline" className="w-full" disabled={isLoading} onClick={() => handleSocialLogin(new GithubAuthProvider())}>
+                    <Github className="mr-2 h-4 w-4" />
+                    GitHub
+                </Button>
+            </div>
           <div className="mt-4 text-center text-sm">
             มีบัญชีอยู่แล้ว?{" "}
             <Link href="/login" className="underline">
