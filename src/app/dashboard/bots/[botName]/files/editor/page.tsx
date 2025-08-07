@@ -116,14 +116,16 @@ function FileEditor() {
                 </div>
             </header>
             
-            <main className="flex-1 p-4 overflow-auto">
+            <main className="flex-1 overflow-auto">
                 {isLoading ? (
-                    <Skeleton className="w-full h-full bg-muted/20" />
+                    <div className="p-4 h-full">
+                        <Skeleton className="w-full h-full bg-muted/20" />
+                    </div>
                 ) : (
                     <Textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
-                        className="w-full h-full p-4 font-mono text-base bg-[#1e1e1e] border-gray-700 rounded-lg resize-none focus:ring-primary focus:border-primary"
+                        className="w-full h-full p-4 font-mono text-base bg-[#1e1e1e] border-0 rounded-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         placeholder="File content goes here..."
                     />
                 )}
