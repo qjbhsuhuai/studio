@@ -41,6 +41,7 @@ import {
     Coins,
     PlusCircle
 } from "lucide-react"
+import { Skeleton } from "./ui/skeleton"
 
 type UserData = {
     firstName: string;
@@ -48,6 +49,7 @@ type UserData = {
     email: string;
     role: string;
     credits?: number;
+    avatar?: string;
 }
 
 export function UserNav() {
@@ -76,23 +78,17 @@ export function UserNav() {
       if (snapshot.exists()) {
         setUser(snapshot.val());
       } else {
-        // Handle case where user is not in DB
-        // Special case for hardcoded admin
         if (loggedInUserEmail.toLowerCase() === 'admin@example.com') {
-          const adminData = {
+          const adminData: UserData = {
             firstName: "แอดมิน",
             lastName: "",
             email: "admin@example.com",
             role: "Admin",
-            credits: 0, // Initial credits
-            status: "Active"
+            credits: 999,
           };
-          // Set the data in Firebase so the listener will pick it up on subsequent loads
-          set(userRef, adminData).then(() => {
-             setUser(adminData);
-          });
+          set(userRef, adminData);
+          setUser(adminData);
         } else {
-          // Regular user not found, something is wrong, log them out.
           sessionStorage.removeItem('userEmail');
           router.push('/login');
         }
@@ -144,77 +140,85 @@ export function UserNav() {
   
   if (!user) {
     return (
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-            <Avatar className="h-9 w-9" />
-        </Button>
+        <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-9 rounded-full" />
+        </div>
     )
   }
 
   return (
     <>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src="" alt="@user" data-ai-hint="person avatar" />
-                <AvatarFallback>{userDisplay?.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{userDisplay}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-             <DropdownMenuItem>
-                  <Coins className="mr-2 h-4 w-4" />
-                  <span>เครดิต: {user.credits ?? 0}</span>
-             </DropdownMenuItem>
-             {isAdmin && (
-                <DropdownMenuItem onClick={() => setIsCreditDialogOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
-                    <span>เพิ่มเครดิต</span>
+        <div className="flex items-center gap-2">
+             <div className="hidden sm:flex items-center gap-2 bg-card/80 border border-border rounded-full px-3 py-1.5 h-9 text-sm">
+                <Coins className="h-4 w-4 text-amber-400" />
+                <span className="font-semibold">{user.credits ?? 0}</span>
+                <span className="text-muted-foreground">เครดิต</span>
+             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={user.avatar || ""} alt="@user" data-ai-hint="person avatar" />
+                    <AvatarFallback>{userDisplay?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userDisplay}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 <DropdownMenuItem className="sm:hidden">
+                      <Coins className="mr-2 h-4 w-4" />
+                      <span>เครดิต: {user.credits ?? 0}</span>
+                 </DropdownMenuItem>
+                 {isAdmin && (
+                    <DropdownMenuItem onClick={() => setIsCreditDialogOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4 text-green-500" />
+                        <span>เพิ่มเครดิต</span>
+                    </DropdownMenuItem>
+                 )}
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>แดชบอร์ด</span>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => router.push('/dashboard/bots')}>
+                    <Bot className="mr-2 h-4 w-4" />
+                    <span>โปรเจกต์</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>โปรไฟล์</span>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem onClick={() => router.push('/dashboard/users')}>
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>จัดการผู้ใช้</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>ตั้งค่าเซิร์ฟเวอร์</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>ออกจากระบบ</span>
                 </DropdownMenuItem>
-             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                <span>แดชบอร์ด</span>
-              </DropdownMenuItem>
-               <DropdownMenuItem onClick={() => router.push('/dashboard/bots')}>
-                <Bot className="mr-2 h-4 w-4" />
-                <span>บอท</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-                <User className="mr-2 h-4 w-4" />
-                <span>โปรไฟล์</span>
-              </DropdownMenuItem>
-              {isAdmin && (
-                <>
-                  <DropdownMenuItem onClick={() => router.push('/dashboard/users')}>
-                    <Users className="mr-2 h-4 w-4" />
-                    <span>จัดการผู้ใช้</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>ตั้งค่าเซิร์ฟเวอร์</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>ออกจากระบบ</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
 
         <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
@@ -232,9 +236,10 @@ export function UserNav() {
                 <Input
                   id="credits-to-add"
                   type="number"
-                  value={creditsToAdd}
+                  value={creditsToAdd === 0 ? '' : creditsToAdd}
                   onChange={(e) => setCreditsToAdd(Number(e.target.value))}
                   className="col-span-3"
+                  placeholder="กรอกจำนวนเครดิต"
                   min="0"
                 />
               </div>
