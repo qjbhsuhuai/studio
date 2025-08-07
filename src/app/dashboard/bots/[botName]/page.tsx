@@ -35,8 +35,7 @@ function formatUptime(startTime: number | undefined): string {
     return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
 }
 
-export default function BotDetailPage({ params }: { params: { botName: string } }) {
-    const { botName } = params;
+function BotDetailClient({ botName }: { botName: string }) {
     const [currentPath, setCurrentPath] = useState('.');
     
     const [logs, setLogs] = useState('');
@@ -53,7 +52,7 @@ export default function BotDetailPage({ params }: { params: { botName: string } 
     const [newItemName, setNewItemName] = useState('');
     const [itemToDelete, setItemToDelete] = useState<any>(null);
 
-    const { data: statusData, mutate: mutateStatus } = useSWR('/api/scripts', (url) => fetcher(url).then(data => {
+    const { data: statusData, mutate: mutateStatus } = useSWR(`/api/scripts`, (url) => fetcher(url).then(data => {
         return data.scripts.find((s: any) => s.name === botName);
     }), { refreshInterval: 2000 });
 
@@ -296,4 +295,8 @@ export default function BotDetailPage({ params }: { params: { botName: string } 
             </Dialog>
         </div>
     );
+}
+
+export default function BotDetailPage({ params }: { params: { botName: string } }) {
+    return <BotDetailClient botName={params.botName} />;
 }
