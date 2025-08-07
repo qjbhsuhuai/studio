@@ -107,7 +107,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
                 setUptime(formatUptime(statusData.startTime));
             }, 1000);
             return () => clearInterval(interval);
-        } else {
+        } else if (isMounted) {
             setUptime(formatUptime(undefined));
         }
     }, [statusData, isMounted]);
