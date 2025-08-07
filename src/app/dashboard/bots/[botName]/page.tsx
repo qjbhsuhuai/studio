@@ -19,6 +19,7 @@ function formatUptime(startTime: number | undefined): string {
     if (!startTime) return '00:00:00';
     const now = Date.now();
     let totalSeconds = Math.floor((now - startTime) / 1000);
+    if (totalSeconds < 0) totalSeconds = 0;
     const hours = Math.floor(totalSeconds / 3600);
     totalSeconds %= 3600;
     const minutes = Math.floor(totalSeconds / 60);
