@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import useSWR from 'swr'
 import Link from "next/link"
 import { CpuIcon, MemoryStickIcon, GaugeIcon, BotIcon } from "@/components/icons"
+import { ref, onValue, off } from "firebase/database";
+import { db } from "@/lib/firebase";
 
 import {
   Card,
@@ -20,6 +22,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 export default function DashboardPage() {
     const [userId, setUserId] = useState<string | null>(null);
+    const [userBots, setUserBots] = useState<any[]>([]);
 
     useEffect(() => {
         const userEmail = sessionStorage.getItem('userEmail');
@@ -29,11 +32,26 @@ export default function DashboardPage() {
         }
     }, []);
 
-    const { data: scriptsData } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
+    // Fetch API data for running status, CPU, Memory
+    const { data: apiData } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
+    
+    // Fetch bot list directly from Firebase for accurate count
+    useEffect(() => {
+      if (!userId) return;
+      const userBotsRef = ref(db, `bots/${userId}`);
+      const listener = onValue(userBotsRef, (snapshot) => {
+        const botData = snapshot.val();
+        const botList = botData ? Object.keys(botData).map(name => ({ name })) : [];
+        setUserBots(botList);
+      });
+      return () => off(userBotsRef, 'value', listener);
+    }, [userId]);
+
+
     const { data: envData } = useSWR('/api/environment', fetcher);
 
-    const totalBots = scriptsData?.scripts?.length || 0;
-    const runningBots = scriptsData?.scripts?.filter((bot: any) => bot.status === 'running').length || 0;
+    const totalBots = userBots.length;
+    const runningBots = apiData?.scripts?.filter((bot: any) => bot.status === 'running').length || 0;
 
     const aggregateStats = (scripts: any[]) => {
         if (!scripts || scripts.length === 0) {
@@ -51,7 +69,7 @@ export default function DashboardPage() {
         );
     };
 
-    const { totalCpu, totalMemory } = aggregateStats(scriptsData?.scripts);
+    const { totalCpu, totalMemory } = aggregateStats(apiData?.scripts);
 
 
   return (
