@@ -95,10 +95,22 @@ type User = {
   credits?: number
 }
 
+type BotProject = {
+    name: string;
+    status: 'running' | 'stopped';
+    cpu: string;
+    memory: string;
+    expiresAt?: number;
+    isOwner: boolean;
+    ownerId?: string;
+};
+
+
 export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
-    const { data, error, mutate } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 3000 });
-    const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+    const { data: apiData, error: apiError, mutate: mutateApi } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
+    const [projects, setProjects] = useState<BotProject[]>([]);
+    const [isLoading, setIsLoading] = useState<Record<string, boolean>>({page: true});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [selectedBot, setSelectedBot] = useState<string | null>(null);
@@ -115,7 +127,6 @@ export default function BotsPage() {
     const CREDITS_PER_DAY = 4;
     const totalCost = creationDays * CREDITS_PER_DAY;
     const hasEnoughCredits = currentUser?.credits !== undefined && currentUser.credits >= totalCost;
-
 
      useEffect(() => {
         const userEmail = sessionStorage.getItem('userEmail');
@@ -137,6 +148,51 @@ export default function BotsPage() {
         }
     }, []);
 
+    useEffect(() => {
+        if (!userId) return;
+
+        setIsLoading(prev => ({...prev, page: true}));
+        const userBotsRef = ref(db, `bots/${userId}`);
+
+        const listener = onValue(userBotsRef, (snapshot) => {
+            const botData = snapshot.val();
+            const botList: BotProject[] = botData ? Object.keys(botData).map(botName => ({
+                name: botName,
+                status: 'stopped', // Default status, will be updated by API data
+                cpu: 'N/A',
+                memory: 'N/A',
+                isOwner: true,
+            })) : [];
+            
+            setProjects(botList);
+            setIsLoading(prev => ({...prev, page: false}));
+        });
+        
+        return () => off(userBotsRef, 'value', listener);
+
+    }, [userId]);
+
+     useEffect(() => {
+        if (apiData?.scripts && projects.length > 0) {
+            setProjects(prevProjects => {
+                return prevProjects.map(p => {
+                    const apiInfo = apiData.scripts.find((s: any) => s.name === p.name);
+                    if (apiInfo) {
+                        return {
+                            ...p,
+                            status: apiInfo.status || 'stopped',
+                            cpu: apiInfo.cpu || 'N/A',
+                            memory: apiInfo.memory ? `${apiInfo.memory}MB` : 'N/A',
+                            expiresAt: apiInfo.expiresAt,
+                        };
+                    }
+                    return p;
+                });
+            });
+        }
+    }, [apiData, projects.length]);
+
+
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
         try {
@@ -152,7 +208,7 @@ export default function BotsPage() {
             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
              setTimeout(() => {
-                mutate();
+                mutateApi();
                 setIsLoading(prev => ({ ...prev, [botName]: false }));
             }, 1000);
         }
@@ -178,7 +234,7 @@ export default function BotsPage() {
         } catch (err:any) {
              toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
-            mutate();
+            mutateApi();
             setIsLoading(prev => ({ ...prev, [selectedBot]: false }));
             setIsDeleteDialogOpen(false);
             setSelectedBot(null);
@@ -236,7 +292,7 @@ export default function BotsPage() {
             setGitUrl('');
             setZipFile(null);
             setCreationDays(1);
-            mutate();
+            mutateApi();
         } catch (err: any) {
             setCreateError(err.message);
         } finally {
@@ -444,13 +500,26 @@ export default function BotsPage() {
                 </DialogContent>
             </Dialog>
 
-            {error && <p className="text-destructive text-center">Could not load project data.</p>}
-            {!data && !error && <p className="text-muted-foreground text-center">Loading projects...</p>}
-            
+            {isLoading.page && <p className="text-muted-foreground text-center">Loading projects...</p>}
+            {!isLoading.page && projects.length === 0 && (
+                <Card className="text-center p-8 bg-card/50">
+                    <CardHeader>
+                        <CardTitle>ยังไม่มีโปรเจกต์</CardTitle>
+                        <CardDescription>ดูเหมือนว่าคุณจะยังไม่ได้สร้างโปรเจกต์เลย</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button onClick={() => setIsCreateDialogOpen(true)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            สร้างโปรเจกต์แรกของคุณ
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
             <div className="space-y-2">
-                {data?.scripts?.map((bot: any) => (
+                {projects.map((bot) => (
                     <div key={bot.name} className="flex flex-col sm:flex-row items-center justify-between p-3 bg-card/80 backdrop-blur-lg border border-border rounded-lg gap-4">
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 w-full">
                            <div className="flex items-center gap-3">
                                 <Badge
                                     variant={bot.status === 'running' ? 'default' : 'secondary'}
@@ -474,44 +543,44 @@ export default function BotsPage() {
                                 )}
                                 <div className="flex items-center gap-1.5">
                                     <CpuIcon className="h-3 w-3" />
-                                    <span>{bot.cpu || 'N/A'}%</span>
+                                    <span>{bot.cpu || 'N/A'}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <MemoryStickIcon className="h-3 w-3" />
-                                    <span>{bot.memory ? `${bot.memory}MB` : 'N/A'}</span>
+                                    <span>{bot.memory || 'N/A'}</span>
                                 </div>
                              </div>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0 w-full sm:w-auto">
-                            <Button
+                             <Button
                                 size="sm"
                                 variant={bot.status === 'running' ? 'destructive' : 'default'}
                                 onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
                                 disabled={isLoading[bot.name]}
-                                className={cn("w-full sm:w-auto text-xs", bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700')}
+                                className={cn("w-1/5 sm:w-auto text-xs", bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700')}
                             >
                                 {bot.status === 'running' ? <StopCircle /> : <Play />}
                                 <span className="hidden sm:inline ml-1">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
                             </Button>
-                            <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs" asChild>
+                            <Button size="sm" variant="outline" className="w-1/5 sm:w-auto text-xs" asChild>
                                 <Link href={`/dashboard/bots/${bot.name}`}>
                                     <Terminal />
                                     <span className="hidden sm:inline ml-1">Console</span>
                                 </Link>
                             </Button>
-                             <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs" asChild>
+                             <Button size="sm" variant="outline" className="w-1/5 sm:w-auto text-xs" asChild>
                                 <Link href={`/dashboard/bots/${bot.name}/files`}>
                                     <Folder />
                                      <span className="hidden sm:inline ml-1">Files</span>
                                 </Link>
                             </Button>
-                             <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs" asChild>
+                             <Button size="sm" variant="outline" className="w-1/5 sm:w-auto text-xs" asChild>
                                 <Link href={`/dashboard/bots/${bot.name}/settings`}>
                                     <Settings />
                                      <span className="hidden sm:inline ml-1">Settings</span>
                                 </Link>
                             </Button>
-                            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
+                            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive w-1/5 sm:w-auto" onClick={() => openDeleteDialog(bot.name)}>
                                 <Trash2 />
                             </Button>
                         </div>
@@ -537,9 +606,3 @@ export default function BotsPage() {
         </div>
     );
 }
-
-    
-
-    
-
-    
