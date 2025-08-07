@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { CpuIcon, MemoryStickIcon } from '@/components/icons';
+import { get, ref, push, query, orderByChild, equalTo, find, set } from 'firebase/database';
+import { db } from '@/lib/firebase';
 
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -94,6 +96,10 @@ export default function BotsPage() {
         if (!selectedBot || !userId) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
+            // Updated to delete from Firebase as well
+            const projectRef = ref(db, `bots/${userId}/${selectedBot}`);
+            await set(projectRef, null);
+
             const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
              const data = await res.json();
              if (!res.ok) throw new Error(data.message);
@@ -161,6 +167,19 @@ export default function BotsPage() {
             if (!res.ok) {
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
+
+            // Also create settings in Firebase
+            const settingsRef = ref(db, `bots/${userId}/${newBotName}/settings`);
+            const newUid = `uid-${newBotName}-${Date.now()}`;
+            await set(settingsRef, {
+                projectName: newBotName,
+                sharingEnabled: false,
+                projectUid: newUid,
+                ownerId: userId,
+                permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
+            });
+
+
             toast({ title: "สำเร็จ", description: result.message });
             setIsCreateDialogOpen(false);
             setNewBotName('');
@@ -175,28 +194,70 @@ export default function BotsPage() {
     };
     
     const handleJoinProject = async () => {
-        if (!projectUid || !userId) {
-            toast({ title: 'เกิดข้อผิดพลาด', description: 'กรุณากรอก Project UID', variant: 'destructive' });
+        const currentUserEmail = sessionStorage.getItem('userEmail');
+        if (!projectUid || !userId || !currentUserEmail) {
+            toast({ title: 'เกิดข้อผิดพลาด', description: 'กรุณากรอก Project UID และตรวจสอบว่าคุณได้ล็อกอินแล้ว', variant: 'destructive' });
             return;
         }
         setIsLoading(prev => ({ ...prev, join: true }));
         setCreateError(null);
 
-        // TODO: Implement API call to join a project
-        console.log(`User ${userId} wants to join project with UID: ${projectUid}`);
-        
-        // This is a placeholder for the actual API call.
-        // You would typically post the UID and userId to your backend.
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            const botsRef = ref(db, 'bots');
+            const snapshot = await get(botsRef);
+            if (!snapshot.exists()) {
+                throw new Error("ไม่พบโปรเจกต์ใดๆ ในระบบ");
+            }
+            
+            const allBots = snapshot.val();
+            let foundProject = null;
+            let ownerId = null;
+            let botName = null;
 
-        toast({
-            title: "ส่งคำขอแล้ว",
-            description: "คำขอเข้าร่วมโปรเจกต์ของคุณถูกส่งแล้ว รอการตอบรับจากเจ้าของโปรเจกต์",
-        });
+            // Search for the project with the matching UID
+            for (const uId in allBots) {
+                for (const bName in allBots[uId]) {
+                    const settings = allBots[uId][bName].settings;
+                    if (settings && settings.projectUid === projectUid) {
+                        foundProject = settings;
+                        ownerId = uId;
+                        botName = bName;
+                        break;
+                    }
+                }
+                if (foundProject) break;
+            }
 
-        setIsLoading(prev => ({ ...prev, join: false }));
-        setIsCreateDialogOpen(false);
-        setProjectUid('');
+            if (!foundProject || !ownerId || !botName) {
+                throw new Error("ไม่พบโปรเจกต์ที่มี UID นี้");
+            }
+
+            if (!foundProject.sharingEnabled) {
+                throw new Error("โปรเจกต์นี้ไม่ได้เปิดการแชร์");
+            }
+
+            // Project found, send a join request
+            const requestsRef = ref(db, `bots/${ownerId}/${botName}/requests`);
+            const newRequestRef = push(requestsRef);
+            await set(newRequestRef, {
+                userId: userId,
+                userEmail: currentUserEmail,
+                status: 'pending' // pending, approved, rejected
+            });
+
+            toast({
+                title: "ส่งคำขอแล้ว",
+                description: "คำขอเข้าร่วมโปรเจกต์ของคุณถูกส่งแล้ว รอการตอบรับจากเจ้าของโปรเจกต์",
+            });
+            
+            setIsCreateDialogOpen(false);
+            setProjectUid('');
+
+        } catch (err: any) {
+             setCreateError(err.message);
+        } finally {
+             setIsLoading(prev => ({ ...prev, join: false }));
+        }
     };
 
 
@@ -280,6 +341,7 @@ export default function BotsPage() {
                                     </Card>
                                 </TabsContent>
                             </Tabs>
+                             {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
                         </TabsContent>
 
                         <TabsContent value="join">
@@ -297,14 +359,14 @@ export default function BotsPage() {
                                     </div>
                                      <DialogFooter>
                                         <Button type="button" onClick={handleJoinProject} disabled={isLoading['join'] || !projectUid}>
-                                            {isLoading['join'] ? 'กำลังเข้าร่วม...' : 'เข้าร่วมโปรเจกต์'}
+                                            {isLoading['join'] ? 'กำลังส่งคำขอ...' : 'เข้าร่วมโปรเจกต์'}
                                         </Button>
                                     </DialogFooter>
+                                     {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
                                 </CardContent>
                             </Card>
                         </TabsContent>
                     </Tabs>
-                    {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
                 </DialogContent>
             </Dialog>
 
@@ -441,3 +503,5 @@ export default function BotsPage() {
         </div>
     );
 }
+
+    
