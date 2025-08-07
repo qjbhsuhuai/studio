@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -83,7 +83,9 @@ const AnsiLogRenderer = ({ logString }: { logString: string }) => {
     );
 };
 
-function BotDetailClient({ botName }: { botName: string }) {
+function BotDetailClient() {
+    const params = useParams();
+    const botName = params.botName as string;
     const [logs, setLogs] = useState('');
     const ws = useRef<WebSocket | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
@@ -135,7 +137,7 @@ function BotDetailClient({ botName }: { botName: string }) {
     }, [statusData, isMounted]);
     
     useEffect(() => {
-        if (!activeApiUrl || !isMounted || !userId) return;
+        if (!activeApiUrl || !isMounted || !userId || !botName) return;
 
         fetch(`/api/logs/${botName}?userId=${userId}`)
             .then(res => res.json())
@@ -331,7 +333,6 @@ function BotDetailClient({ botName }: { botName: string }) {
     );
 }
 
-export default function BotDetailPage({ params }: { params: { botName: string } }) {
-    const { botName } = params;
-    return <BotDetailClient botName={botName} />;
+export default function BotDetailPage() {
+    return <BotDetailClient />;
 }
