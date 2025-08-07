@@ -176,93 +176,82 @@ export default function BotsPage() {
 
     return (
         <div className="space-y-6">
-             <div className="flex justify-between items-center">
-                <div>
-                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <h1 className="text-lg font-semibold text-white">ทำงานบน: {envData?.detail || 'Loading...'}</h1>
-                    </div>
-                </div>
-                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 fixed bottom-8 right-8 z-20 shadow-lg">
-                            <PlusCircle className="h-8 w-8" />
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[525px] bg-card border-border">
-                        <DialogHeader>
-                            <DialogTitle>Create New Project</DialogTitle>
-                            <DialogDescription>
-                                Choose a method to create your project.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="bot-name" className="text-right">Project Name</Label>
-                                <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
-                            </div>
+             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 fixed bottom-8 right-8 z-20 shadow-lg">
+                        <PlusCircle className="h-8 w-8" />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[525px] bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle>Create New Project</DialogTitle>
+                        <DialogDescription>
+                            Choose a method to create your project.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="bot-name" className="text-right">Project Name</Label>
+                            <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
                         </div>
-                        <Tabs defaultValue="empty" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />Empty</TabsTrigger>
-                                <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
-                                <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="empty">
-                                 <Card className="bg-transparent border-0 shadow-none">
-                                    <CardContent className="pt-6">
-                                        <div className="text-sm text-muted-foreground">
-                                            <p>Create a blank project. You will need to add files later.</p>
-                                        </div>
-                                         <DialogFooter className="mt-4">
-                                            <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
-                                                {isLoading['create'] ? 'Creating...' : 'Create Project'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="git">
-                                 <Card className="bg-transparent border-0 shadow-none">
-                                    <CardContent className="pt-6 space-y-4">
-                                        <div>
-                                            <Label htmlFor="git-url">Git Repository URL</Label>
-                                            <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
-                                        </div>
-                                         <DialogFooter>
-                                            <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
-                                                {isLoading['create'] ? 'Cloning...' : 'Clone Project'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="zip">
-                                 <Card className="bg-transparent border-0 shadow-none">
-                                    <CardContent className="pt-6 space-y-4">
-                                        <div>
-                                            <Label htmlFor="zip-file">Upload .zip file</Label>
-                                            <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
-                                        </div>
-                                        <DialogFooter>
-                                            <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
-                                                {isLoading['create'] ? 'Uploading...' : 'Create from ZIP'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        </Tabs>
-                        {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
-                    </DialogContent>
-                </Dialog>
-            </div>
+                    </div>
+                    <Tabs defaultValue="empty" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />Empty</TabsTrigger>
+                            <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
+                            <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="empty">
+                             <Card className="bg-transparent border-0 shadow-none">
+                                <CardContent className="pt-6">
+                                    <div className="text-sm text-muted-foreground">
+                                        <p>Create a blank project. You will need to add files later.</p>
+                                    </div>
+                                     <DialogFooter className="mt-4">
+                                        <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
+                                            {isLoading['create'] ? 'Creating...' : 'Create Project'}
+                                        </Button>
+                                    </DialogFooter>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="git">
+                             <Card className="bg-transparent border-0 shadow-none">
+                                <CardContent className="pt-6 space-y-4">
+                                    <div>
+                                        <Label htmlFor="git-url">Git Repository URL</Label>
+                                        <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
+                                    </div>
+                                     <DialogFooter>
+                                        <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
+                                            {isLoading['create'] ? 'Cloning...' : 'Clone Project'}
+                                        </Button>
+                                    </DialogFooter>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="zip">
+                             <Card className="bg-transparent border-0 shadow-none">
+                                <CardContent className="pt-6 space-y-4">
+                                    <div>
+                                        <Label htmlFor="zip-file">Upload .zip file</Label>
+                                        <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
+                                            {isLoading['create'] ? 'Uploading...' : 'Create from ZIP'}
+                                        </Button>
+                                    </DialogFooter>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                    {createError && <p className="text-sm text-destructive mt-2">{createError}</p>}
+                </DialogContent>
+            </Dialog>
 
             <Card className="bg-card/80 backdrop-blur-lg border-border">
-                <CardHeader>
-                    <CardTitle>Projects</CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -388,5 +377,3 @@ export default function BotsPage() {
 
         </div>
     );
-
-    
