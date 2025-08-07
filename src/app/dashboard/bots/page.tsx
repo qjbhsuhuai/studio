@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2 } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -37,8 +37,49 @@ import { CpuIcon, MemoryStickIcon } from '@/components/icons';
 import { get, ref, push, query, orderByChild, equalTo, find, set } from 'firebase/database';
 import { db } from '@/lib/firebase';
 
-
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const CountdownTimer = ({ expiryTimestamp }: { expiryTimestamp: number | undefined }) => {
+    const calculateTimeLeft = () => {
+        if (!expiryTimestamp) return null;
+        const difference = +new Date(expiryTimestamp) - +new Date();
+        let timeLeft: { [key: string]: number } = {};
+
+        if (difference > 0) {
+            timeLeft = {
+                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+                seconds: Math.floor((difference / 1000) % 60),
+            };
+        }
+        return timeLeft;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    });
+
+    if (!timeLeft || Object.keys(timeLeft).length === 0) {
+        return <span className="text-muted-foreground">หมดอายุ</span>;
+    }
+
+    const formatTime = (value: number) => value.toString().padStart(2, '0');
+    
+    return (
+        <span>
+            {timeLeft.days > 0 && `${timeLeft.days}d `}
+            {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
+        </span>
+    );
+};
+
 
 export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
@@ -395,7 +436,7 @@ export default function BotsPage() {
                                 <Badge variant="outline" className="text-xs font-mono">{bot.type || 'unknown'}</Badge>
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-grow grid grid-cols-2 gap-4 text-sm">
+                        <CardContent className="flex-grow grid grid-cols-3 gap-4 text-sm">
                             <div className="flex items-center gap-2">
                                 <CpuIcon className="h-5 w-5 text-muted-foreground" />
                                 <div>
@@ -410,6 +451,15 @@ export default function BotsPage() {
                                     <p className="font-semibold">{bot.memory ? `${bot.memory} MB` : 'N/A'}</p>
                                 </div>
                             </div>
+                            {bot.status === 'running' && bot.expiresAt && (
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-muted-foreground text-xs">เวลาที่เหลือ</p>
+                                        <p className="font-semibold font-mono"><CountdownTimer expiryTimestamp={bot.expiresAt} /></p>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                         <CardFooter className="grid grid-cols-3 gap-2 p-3">
                              <div className="col-span-3 flex justify-between items-center gap-1">
@@ -502,6 +552,5 @@ export default function BotsPage() {
 
         </div>
     );
-}
 
     
