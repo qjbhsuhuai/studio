@@ -251,7 +251,10 @@ export default function BotsPage() {
             </Dialog>
 
             <Card className="bg-card/80 backdrop-blur-lg border-border">
-                <CardContent className="pt-6">
+                <CardHeader>
+                    <CardTitle>Projects</CardTitle>
+                </CardHeader>
+                <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -377,3 +380,4 @@ export default function BotsPage() {
 
         </div>
     );
+}
