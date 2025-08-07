@@ -42,7 +42,7 @@ import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const TimeLeftDisplay = ({ expiryTimestamp, status }: { expiryTimestamp: number | undefined, status: 'running' | 'stopped' }) => {
+const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefined }) => {
     const calculateTimeLeft = () => {
         if (!expiryTimestamp) return null;
         const difference = +new Date(expiryTimestamp) - +new Date();
@@ -68,28 +68,20 @@ const TimeLeftDisplay = ({ expiryTimestamp, status }: { expiryTimestamp: number 
         return () => clearInterval(timer);
     }, [expiryTimestamp]);
 
-    if (!timeLeft || timeLeft.expired) {
+    if (!timeLeft) return null;
+    
+    if (timeLeft.expired) {
         return <span className="text-muted-foreground">หมดอายุ</span>;
     }
 
     const formatTime = (value: number) => value.toString().padStart(2, '0');
 
-    if (status === 'running') {
-        return (
-            <span className="font-mono">
-                {timeLeft.days > 0 && `${timeLeft.days}d `}
-                {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
-            </span>
-        );
-    } else {
-        const parts = [];
-        if (timeLeft.days > 0) parts.push(`${timeLeft.days} วัน`);
-        if (timeLeft.hours > 0) parts.push(`${timeLeft.hours} ชั่วโมง`);
-        if (timeLeft.days === 0 && timeLeft.hours === 0) {
-             parts.push(`${timeLeft.minutes} นาที`);
-        }
-        return <span>เหลือเวลา {parts.join(' ')}</span>;
-    }
+    return (
+        <span className="font-mono">
+            {timeLeft.days > 0 && `${timeLeft.days}d `}
+            {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
+        </span>
+    );
 };
 
 type User = {
@@ -160,7 +152,7 @@ export default function BotsPage() {
     useEffect(() => {
         if (!userId) return;
 
-        setIsLoading(prev => ({...prev, page: true}));
+        setIsLoading(prev => ({ ...prev, page: true }));
         const userBotsRef = ref(db, `bots/${userId}`);
 
         const listener = onValue(userBotsRef, (snapshot) => {
@@ -168,19 +160,19 @@ export default function BotsPage() {
             const ownedBots = botData ? Object.keys(botData) : [];
             
             const botList: BotProject[] = ownedBots.map(botName => {
-                 const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
-                 return {
+                const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
+                return {
                     name: botName,
                     status: apiInfo?.status || 'stopped',
                     cpu: apiInfo?.cpu || 'N/A',
                     memory: apiInfo?.memory ? `${apiInfo.memory}MB` : 'N/A',
                     expiresAt: apiInfo?.expiresAt,
                     isOwner: true,
-                 }
+                };
             });
             
             setProjects(botList);
-            setIsLoading(prev => ({...prev, page: false}));
+            setIsLoading(prev => ({ ...prev, page: false }));
         });
         
         return () => off(userBotsRef, 'value', listener);
@@ -237,6 +229,11 @@ export default function BotsPage() {
     const handleCreateProject = async (creationMethod: 'empty' | 'git' | 'zip') => {
         if (!userId) {
             toast({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถระบุผู้ใช้ได้ กรุณาล็อกอินใหม่อีกครั้ง', variant: 'destructive' });
+            return;
+        }
+        
+        if (!newBotName) {
+            setCreateError("กรุณากรอกชื่อโปรเจกต์");
             return;
         }
 
@@ -553,7 +550,7 @@ export default function BotsPage() {
                                  {bot.expiresAt && (
                                     <div className="flex items-center gap-1.5">
                                         <Clock className="h-3 w-3" />
-                                        <TimeLeftDisplay expiryTimestamp={bot.expiresAt} status={bot.status} />
+                                        <TimeLeftDisplay expiryTimestamp={bot.expiresAt} />
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1.5">
