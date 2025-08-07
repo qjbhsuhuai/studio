@@ -156,13 +156,17 @@ export default function BotsPage() {
 
         const listener = onValue(userBotsRef, (snapshot) => {
             const botData = snapshot.val();
-            const botList: BotProject[] = botData ? Object.keys(botData).map(botName => ({
-                name: botName,
-                status: 'stopped', // Default status, will be updated by API data
-                cpu: 'N/A',
-                memory: 'N/A',
-                isOwner: true,
-            })) : [];
+            const botList: BotProject[] = botData ? Object.keys(botData).map(botName => {
+                 const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
+                 return {
+                    name: botName,
+                    status: apiInfo?.status || 'stopped',
+                    cpu: apiInfo?.cpu || 'N/A',
+                    memory: apiInfo?.memory ? `${apiInfo.memory}MB` : 'N/A',
+                    expiresAt: apiInfo?.expiresAt,
+                    isOwner: true,
+                 }
+            }) : [];
             
             setProjects(botList);
             setIsLoading(prev => ({...prev, page: false}));
@@ -170,7 +174,7 @@ export default function BotsPage() {
         
         return () => off(userBotsRef, 'value', listener);
 
-    }, [userId]);
+    }, [userId, apiData]);
 
      useEffect(() => {
         if (apiData?.scripts && projects.length > 0) {
