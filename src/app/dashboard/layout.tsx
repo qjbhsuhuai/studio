@@ -1,4 +1,6 @@
 
+"use client"
+
 import { type ReactNode } from "react"
 import Link from "next/link"
 import { Settings, Globe } from "lucide-react"
@@ -55,5 +57,3 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </ConditionalLayout>
   )
 }
-
-    
