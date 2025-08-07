@@ -40,14 +40,14 @@ export default function FileManagerPage() {
     const { data, error, mutate } = useSWR(`/api/files/${botName}?path=${encodeURIComponent(currentPath)}`, fetcher);
     const { toast } = useToast();
 
-    const joinPath = (...parts: string[]) => {
-        const newParts = parts.filter(part => part !== '.');
-        const path = newParts.join('/');
-        return path.replace(/\/{2,}/g, '/');
-    }
-
     const handleItemClick = (item: FileOrFolder) => {
-        const newPath = joinPath(currentPath, item.name);
+        let newPath;
+        if (currentPath === '.') {
+            newPath = item.name;
+        } else {
+            newPath = `${currentPath}/${item.name}`;
+        }
+        
         if (item.type === 'directory') {
             setCurrentPath(newPath);
         } else {
