@@ -113,7 +113,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
     }, [statusData, isMounted]);
     
     useEffect(() => {
-        if (!activeApiUrl) return;
+        if (!activeApiUrl || !isMounted) return;
 
         fetch(`/api/logs/${botName}`)
             .then(res => res.json())
@@ -143,7 +143,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
         }
 
         return () => ws.current?.close();
-    }, [botName, activeApiUrl]);
+    }, [botName, activeApiUrl, isMounted]);
 
     useEffect(() => {
         if (logContainerRef.current) logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
@@ -175,6 +175,10 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
         }
     };
     
+    if (!isMounted) {
+        return null;
+    }
+    
     const isRunning = statusData?.status === 'running';
 
     return (
@@ -187,7 +191,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
                 </Link>
                 <h1 className="text-xl font-semibold">เทอร์มินัล: {botName}</h1>
                 <div className="ml-auto flex items-center gap-4">
-                    {isMounted && statusData && (
+                    {statusData && (
                         <>
                             <p className={cn("text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
                                 {statusData?.status || 'Offline'}
