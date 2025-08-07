@@ -127,7 +127,6 @@ export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const { data: apiData, error: apiError, mutate: mutateApi } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
     
-    const [firebaseBots, setFirebaseBots] = useState<BotProject[]>([]);
     const [projects, setProjects] = useState<BotProject[]>([]);
     
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({page: true});
@@ -164,7 +163,7 @@ export default function BotsPage() {
         }
     }, []);
 
-    // Effect to fetch bot list from Firebase
+    // Effect to fetch bot list from Firebase and merge with API data
     useEffect(() => {
         if (!userId) return;
 
@@ -172,34 +171,31 @@ export default function BotsPage() {
         const userBotsRef = ref(db, `bots/${userId}`);
 
         const listener = onValue(userBotsRef, (snapshot) => {
-            const botData = snapshot.val();
-            const ownedBotNames = botData ? Object.keys(botData) : [];
+            const botData = snapshot.val() || {};
+            const botNames = Object.keys(botData);
+
+            const botsFromDb: BotProject[] = botNames.map(botName => {
+                 const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
+                 const firebaseInfo = botData[botName];
+
+                return {
+                    name: botName,
+                    status: apiInfo?.status || 'stopped',
+                    cpu: apiInfo?.cpu || 'N/A',
+                    memory: apiInfo?.memory || 'N/A',
+                    isOwner: true,
+                    expiresAt: firebaseInfo?.settings?.expiresAt || apiInfo?.expiresAt,
+                };
+            });
             
-            const botsFromDb: BotProject[] = ownedBotNames.map(botName => ({
-                name: botName,
-                status: 'stopped', // Default status
-                cpu: 'N/A',
-                memory: 'N/A',
-                isOwner: true,
-                expiresAt: undefined, // Default expiry, will be merged
-            }));
-            
-            setFirebaseBots(botsFromDb);
+            setProjects(botsFromDb);
             setIsLoading(prev => ({ ...prev, page: false }));
         });
         
         return () => off(userBotsRef, 'value', listener);
 
-    }, [userId]);
+    }, [userId, apiData]); // Rerun when userId or apiData changes
 
-    // Effect to merge Firebase bots with API data
-    useEffect(() => {
-        const mergedProjects = firebaseBots.map(p => {
-            const apiInfo = apiData?.scripts?.find((s: any) => s.name === p.name);
-            return apiInfo ? { ...p, ...apiInfo } : p;
-        });
-        setProjects(mergedProjects);
-    }, [firebaseBots, apiData]);
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -299,6 +295,8 @@ export default function BotsPage() {
             const newCredits = currentCredits - totalCost;
             await update(userRef, { credits: newCredits });
 
+            // Calculate expiry date and save it to Firebase
+            const expiryTimestamp = new Date().getTime() + creationDays * 24 * 60 * 60 * 1000;
             const settingsRef = ref(db, `bots/${userId}/${newBotName}/settings`);
             const newUid = `uid-${newBotName}-${Date.now()}`;
             await set(settingsRef, {
@@ -307,11 +305,9 @@ export default function BotsPage() {
                 projectUid: newUid,
                 ownerId: userId,
                 permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
+                expiresAt: expiryTimestamp, // Save expiry time here
             });
             
-            // Just mutate, don't update state directly to avoid race conditions
-            mutateApi(); 
-
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
             setIsCreateDialogOpen(false);
             setNewBotName('');

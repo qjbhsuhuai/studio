@@ -53,6 +53,7 @@ type ProjectSettings = {
     projectUid: string;
     permissions: PermissionsState;
     ownerId: string;
+    expiresAt?: number;
 };
 
 type CollaboratorRequest = {
@@ -104,7 +105,8 @@ export default function ProjectSettingsPage() {
             if (snapshot.exists()) {
                 setSettings(snapshot.val());
             } else {
-                // Initialize settings if they don't exist
+                // This case should ideally not happen if settings are created with the bot
+                // but as a fallback, we can initialize them.
                 const newUid = `uid-${botName}-${Date.now()}`;
                 const initialSettings: ProjectSettings = {
                     projectName: botName,
@@ -117,6 +119,7 @@ export default function ProjectSettingsPage() {
                         canManageFiles: false,
                         canInstall: false,
                     },
+                    expiresAt: 0,
                 };
                 set(settingsRef, initialSettings);
                 setSettings(initialSettings);
