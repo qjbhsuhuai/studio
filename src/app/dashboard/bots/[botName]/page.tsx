@@ -80,12 +80,17 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
     const [activeApiUrl, setActiveApiUrl] = useState<string | null>(null);
     const { toast } = useToast();
     const [inputCommand, setInputCommand] = useState('');
+    const [isMounted, setIsMounted] = useState(false);
 
     const { data: statusData, mutate: mutateStatus } = useSWR(`/api/scripts`, (url) => fetcher(url).then(data => {
         return data.scripts.find((s: any) => s.name === botName);
     }), { refreshInterval: 2000 });
 
     const [uptime, setUptime] = useState('00:00:00');
+    
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         const settingsRef = ref(db, 'admin/serverSettings/activeApiUrl');
@@ -97,7 +102,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
     }, []);
 
     useEffect(() => {
-        if (statusData?.status === 'running') {
+        if (statusData?.status === 'running' && isMounted) {
             const interval = setInterval(() => {
                 setUptime(formatUptime(statusData.startTime));
             }, 1000);
@@ -105,7 +110,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
         } else {
             setUptime(formatUptime(undefined));
         }
-    }, [statusData]);
+    }, [statusData, isMounted]);
     
     useEffect(() => {
         if (!activeApiUrl) return;
@@ -182,7 +187,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
                 </Link>
                 <h1 className="text-xl font-semibold">เทอร์มินัล: {botName}</h1>
                 <div className="ml-auto flex items-center gap-4">
-                    {statusData && (
+                    {isMounted && statusData && (
                         <>
                             <p className={cn("text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
                                 {statusData?.status || 'Offline'}
