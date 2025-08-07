@@ -22,7 +22,6 @@ const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 export default function DashboardPage() {
     const [userId, setUserId] = useState<string | null>(null);
-    const [userBots, setUserBots] = useState<any[]>([]);
 
     useEffect(() => {
         const userEmail = sessionStorage.getItem('userEmail');
@@ -32,25 +31,25 @@ export default function DashboardPage() {
         }
     }, []);
 
-    // Fetch API data for running status, CPU, Memory
+    // Fetch API data for the logged-in user's running status, CPU, Memory
     const { data: apiData } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
     
-    // Fetch bot list directly from Firebase for accurate count
-    useEffect(() => {
-      if (!userId) return;
-      const userBotsRef = ref(db, `bots/${userId}`);
-      const listener = onValue(userBotsRef, (snapshot) => {
-        const botData = snapshot.val();
-        const botList = botData ? Object.keys(botData).map(name => ({ name })) : [];
-        setUserBots(botList);
-      });
-      return () => off(userBotsRef, 'value', listener);
-    }, [userId]);
-
+    // Fetch bot list directly from Firebase for accurate count, also for the logged-in user
+    const { data: firebaseBotsData } = useSWR(userId ? `bots/${userId}` : null, (path) => {
+        return new Promise((resolve) => {
+            const userBotsRef = ref(db, path);
+            onValue(userBotsRef, (snapshot) => {
+                const botData = snapshot.val();
+                const botList = botData ? Object.keys(botData).map(name => ({ name })) : [];
+                resolve(botList);
+            }, { onlyOnce: true }); // Use onlyOnce to avoid conflicts with SWR revalidation
+        });
+    });
 
     const { data: envData } = useSWR('/api/environment', fetcher);
-
-    const totalBots = userBots.length;
+    
+    // Use the count from the user-specific API data if available, otherwise from firebase
+    const totalBots = apiData?.scripts?.length ?? firebaseBotsData?.length ?? 0;
     const runningBots = apiData?.scripts?.filter((bot: any) => bot.status === 'running').length || 0;
 
     const aggregateStats = (scripts: any[]) => {
