@@ -72,8 +72,7 @@ const AnsiLogRenderer = ({ logString }: { logString: string }) => {
     );
 };
 
-function BotDetailClient({ params }: { params: { botName: string } }) {
-    const { botName } = params;
+function BotDetailClient({ botName }: { botName: string }) {
     const [logs, setLogs] = useState('');
     const ws = useRef<WebSocket | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
@@ -238,5 +237,6 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
 }
 
 export default function BotDetailPage({ params }: { params: { botName: string } }) {
-    return <BotDetailClient params={params} />;
+    const { botName } = params;
+    return <BotDetailClient botName={botName} />;
 }
