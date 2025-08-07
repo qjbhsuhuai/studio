@@ -260,7 +260,7 @@ export default function BotsPage() {
                                 <TableHead>Type</TableHead>
                                 <TableHead>CPU</TableHead>
                                 <TableHead>Memory</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
