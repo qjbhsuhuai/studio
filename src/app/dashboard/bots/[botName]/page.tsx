@@ -181,20 +181,24 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
                 </Link>
                 <h1 className="text-xl font-semibold">เทอร์มินัล: {botName}</h1>
                 <div className="ml-auto flex items-center gap-4">
-                     <p className={cn("text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
-                        {statusData?.status || 'Offline'}
-                     </p>
-                     <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className={cn(
-                            "h-9 w-9 rounded-full",
-                            isRunning ? "bg-red-500/80 hover:bg-red-600/80 text-white" : "bg-green-500/80 hover:bg-green-600/80 text-white"
-                        )}
-                        onClick={() => handleAction(isRunning ? 'stop' : 'run')}
-                    >
-                        {isRunning ? <StopCircle className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                    </Button>
+                    {statusData && (
+                        <>
+                            <p className={cn("text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
+                                {statusData?.status || 'Offline'}
+                            </p>
+                            <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className={cn(
+                                    "h-9 w-9 rounded-full",
+                                    isRunning ? "bg-red-500/80 hover:bg-red-600/80 text-white" : "bg-green-500/80 hover:bg-green-600/80 text-white"
+                                )}
+                                onClick={() => handleAction(isRunning ? 'stop' : 'run')}
+                            >
+                                {isRunning ? <StopCircle className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                            </Button>
+                        </>
+                    )}
                 </div>
             </header>
             
