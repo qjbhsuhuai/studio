@@ -42,45 +42,54 @@ import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const CountdownTimer = ({ expiryTimestamp }: { expiryTimestamp: number | undefined }) => {
+const TimeLeftDisplay = ({ expiryTimestamp, status }: { expiryTimestamp: number | undefined, status: 'running' | 'stopped' }) => {
     const calculateTimeLeft = () => {
         if (!expiryTimestamp) return null;
         const difference = +new Date(expiryTimestamp) - +new Date();
-        let timeLeft: { [key: string]: number } = {};
+        if (difference <= 0) return { expired: true };
 
-        if (difference > 0) {
-            timeLeft = {
-                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-                minutes: Math.floor((difference / 1000 / 60) % 60),
-                seconds: Math.floor((difference / 1000) % 60),
-            };
-        }
-        return timeLeft;
+        return {
+            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+            minutes: Math.floor((difference / 1000 / 60) % 60),
+            seconds: Math.floor((difference / 1000) % 60),
+            expired: false,
+        };
     };
 
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
-        const timer = setTimeout(() => {
+        if (!expiryTimestamp) return;
+        const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
-        return () => clearTimeout(timer);
-    });
+        return () => clearInterval(timer);
+    }, [expiryTimestamp]);
 
-    if (!timeLeft || Object.keys(timeLeft).length === 0) {
+    if (!timeLeft || timeLeft.expired) {
         return <span className="text-muted-foreground">หมดอายุ</span>;
     }
 
     const formatTime = (value: number) => value.toString().padStart(2, '0');
-    
-    return (
-        <span>
-            {timeLeft.days > 0 && `${timeLeft.days}d `}
-            {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
-        </span>
-    );
+
+    if (status === 'running') {
+        return (
+            <span className="font-mono">
+                {timeLeft.days > 0 && `${timeLeft.days}d `}
+                {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
+            </span>
+        );
+    } else {
+        const parts = [];
+        if (timeLeft.days > 0) parts.push(`${timeLeft.days} วัน`);
+        if (timeLeft.hours > 0) parts.push(`${timeLeft.hours} ชั่วโมง`);
+        if (timeLeft.days === 0 && timeLeft.hours === 0) {
+             parts.push(`${timeLeft.minutes} นาที`);
+        }
+        return <span>เหลือเวลา {parts.join(' ')}</span>;
+    }
 };
 
 type User = {
@@ -156,8 +165,13 @@ export default function BotsPage() {
 
         const listener = onValue(userBotsRef, (snapshot) => {
             const botData = snapshot.val();
-            const botList: BotProject[] = botData ? Object.keys(botData).map(botName => {
-                 const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
+            const ownedBots = botData ? Object.keys(botData) : [];
+            
+            // Filter apiData to only include owned bots
+            const userApiScripts = apiData?.scripts?.filter((s: any) => ownedBots.includes(s.name)) || [];
+
+            const botList: BotProject[] = ownedBots.map(botName => {
+                 const apiInfo = userApiScripts.find((s: any) => s.name === botName);
                  return {
                     name: botName,
                     status: apiInfo?.status || 'stopped',
@@ -166,7 +180,7 @@ export default function BotsPage() {
                     expiresAt: apiInfo?.expiresAt,
                     isOwner: true,
                  }
-            }) : [];
+            });
             
             setProjects(botList);
             setIsLoading(prev => ({...prev, page: false}));
@@ -194,7 +208,7 @@ export default function BotsPage() {
                 });
             });
         }
-    }, [apiData, projects.length]);
+    }, [apiData, projects]);
 
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
@@ -269,7 +283,7 @@ export default function BotsPage() {
             }
 
             const newCredits = currentCredits - totalCost;
-            await update(userRef, { credits: newCredits });
+            
             // --- End Credit Deduction Logic ---
 
 
@@ -291,10 +305,13 @@ export default function BotsPage() {
             });
             const result = await res.json();
             if (!res.ok) {
-                // Rollback credit deduction on failure
-                await update(userRef, { credits: currentCredits });
+                // Do NOT roll back credit deduction on failure, let backend handle it if needed
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
+
+            // Deduct credits only on successful project creation from API
+            await update(userRef, { credits: newCredits });
+
 
             // Also create settings in Firebase
             const settingsRef = ref(db, `bots/${userId}/${newBotName}/settings`);
@@ -557,10 +574,10 @@ export default function BotsPage() {
                                 <span className="font-semibold truncate">{bot.name}</span>
                             </div>
                              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                                 {bot.status === 'running' && bot.expiresAt && (
-                                    <div className="flex items-center gap-1.5 font-mono">
+                                 {bot.expiresAt && (
+                                    <div className="flex items-center gap-1.5">
                                         <Clock className="h-3 w-3" />
-                                        <CountdownTimer expiryTimestamp={bot.expiresAt} />
+                                        <TimeLeftDisplay expiryTimestamp={bot.expiresAt} status={bot.status} />
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1.5">
@@ -629,3 +646,4 @@ export default function BotsPage() {
     );
 }
 
+    
