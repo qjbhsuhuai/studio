@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MoreHorizontal, Trash2, Ban } from "lucide-react"
+import { MoreHorizontal, Trash2, Ban, CheckCircle, XCircle } from "lucide-react"
 import { get, ref, set, onValue, off, remove } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
@@ -51,7 +51,7 @@ type User = {
   name: string
   email: string
   role: string
-  status: "Active" | "Banned"
+  status: "Active" | "Banned" | "Pending"
   avatar: string
   credits?: number
 }
@@ -146,29 +146,35 @@ export default function UsersPage() {
     }
   };
 
-  const handleBanToggle = async (user: User) => {
-    const newStatus = user.status === "Active" ? "Banned" : "Active";
-    const userRef = ref(db, `users/${user.id}`);
+  const updateUserStatus = async (user: User, newStatus: "Active" | "Banned" | "Pending") => {
+     const userRef = ref(db, `users/${user.id}/status`);
      try {
-      const snapshot = await get(userRef);
-      if(snapshot.exists()) {
-        const userData = snapshot.val();
-        await set(userRef, {
-          ...userData,
-          status: newStatus
-        });
+        await set(userRef, newStatus);
         toast({
           title: "สำเร็จ",
           description: `เปลี่ยนสถานะของ ${user.name} เป็น ${newStatus} แล้ว`,
         });
-      }
-    } catch (error) {
-       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้",
-        variant: "destructive",
-      });
-    }
+     } catch(error) {
+        toast({
+            title: "เกิดข้อผิดพลาด",
+            description: "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้",
+            variant: "destructive",
+        });
+     }
+  }
+  
+  const handleApprove = (user: User) => {
+    updateUserStatus(user, "Active");
+  }
+
+  const handleReject = (user: User) => {
+    // Rejection means deleting the user
+    handleDeleteClick(user);
+  }
+
+  const handleBanToggle = async (user: User) => {
+    const newStatus = user.status === "Active" ? "Banned" : "Active";
+    updateUserStatus(user, newStatus);
   }
 
   return (
@@ -229,7 +235,11 @@ export default function UsersPage() {
                       </Badge>
                     </TableCell>
                      <TableCell className="hidden sm:table-cell">
-                       <Badge variant={user.status === "Active" ? "secondary" : "destructive"}>
+                       <Badge variant={
+                           user.status === "Active" ? "secondary" 
+                           : user.status === "Banned" ? "destructive" 
+                           : "default"
+                        } className={user.status === 'Pending' ? 'bg-yellow-500' : ''}>
                           {user.status}
                        </Badge>
                      </TableCell>
@@ -237,28 +247,41 @@ export default function UsersPage() {
                         {user.credits ?? 0}
                      </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" disabled={user.role === 'Admin'}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleManageCreditsClick(user)}>
-                            จัดการเครดิต
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleBanToggle(user)}>
-                              <Ban className="mr-2 h-4 w-4" />
-                              <span>{user.status === "Active" ? "แบนผู้ใช้" : "ยกเลิกการแบน"}</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(user)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>ลบผู้ใช้</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                       {user.status === 'Pending' ? (
+                            <div className="flex gap-2 justify-end">
+                                <Button size="sm" variant="outline" className="text-green-400 border-green-400 hover:bg-green-400/10 hover:text-green-300" onClick={() => handleApprove(user)}>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    อนุมัติ
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleReject(user)}>
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    ปฏิเสธ
+                                </Button>
+                            </div>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" disabled={user.role === 'Admin'}>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleManageCreditsClick(user)}>
+                                จัดการเครดิต
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleBanToggle(user)}>
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  <span>{user.status === "Active" ? "แบนผู้ใช้" : "ยกเลิกการแบน"}</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(user)}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>ลบผู้ใช้</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -322,5 +345,3 @@ export default function UsersPage() {
     </>
   )
 }
-
-    

@@ -84,6 +84,12 @@ export default function LoginPage() {
                     description: "บัญชีของคุณถูกระงับการใช้งาน",
                     variant: "destructive",
                 });
+            } else if (userData.status === "Pending") {
+                 toast({
+                    title: "บัญชียังไม่พร้อมใช้งาน",
+                    description: "บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ",
+                    variant: "destructive",
+                });
             } else {
                 handleSuccessfulLogin(userData.email, userData.firstName || user.displayName || 'User');
             }
@@ -159,6 +165,12 @@ export default function LoginPage() {
             toast({
               title: "เข้าสู่ระบบไม่สำเร็จ",
               description: "บัญชีของคุณถูกระงับการใช้งาน",
+              variant: "destructive",
+            })
+          } else if (userData.status === "Pending") {
+             toast({
+              title: "บัญชียังไม่พร้อมใช้งาน",
+              description: "บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ",
               variant: "destructive",
             })
           } else {
