@@ -29,7 +29,6 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 type FileOrFolder = {
   name: string;
   type: 'file' | 'directory';
-  path: string;
 };
 
 export default function FileManagerPage() {
@@ -41,11 +40,18 @@ export default function FileManagerPage() {
     const { data, error, mutate } = useSWR(`/api/files/${botName}?path=${encodeURIComponent(currentPath)}`, fetcher);
     const { toast } = useToast();
 
+    const joinPath = (...parts: string[]) => {
+        const newParts = parts.filter(part => part !== '.');
+        const path = newParts.join('/');
+        return path.replace(/\/{2,}/g, '/');
+    }
+
     const handleItemClick = (item: FileOrFolder) => {
+        const newPath = joinPath(currentPath, item.name);
         if (item.type === 'directory') {
-            setCurrentPath(item.path);
+            setCurrentPath(newPath);
         } else {
-            router.push(`/dashboard/bots/${botName}/files/editor?filePath=${encodeURIComponent(item.path)}`);
+            router.push(`/dashboard/bots/${botName}/files/editor?filePath=${encodeURIComponent(newPath)}`);
         }
     };
     
@@ -70,7 +76,7 @@ export default function FileManagerPage() {
                 <Button variant="ghost" size="icon" className="mr-4" onClick={handleGoBack}>
                     <ArrowLeft />
                 </Button>
-                <h1 className="text-xl font-semibold">ไฟล์ใน: {botName}</h1>
+                <h1 className="text-xl font-semibold">ไฟล์ใน: {botName}/{currentPath === '.' ? '' : currentPath}</h1>
             </header>
             
             <main className="flex-1 p-4 overflow-auto">
