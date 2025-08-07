@@ -184,7 +184,7 @@ function BotDetailClient() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
         } catch (err: any) {
-            toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
+             console.error(`Error with action ${action}:`, err);
         } finally {
             setTimeout(() => {
                 mutateStatus();
