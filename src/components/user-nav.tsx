@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { get, ref, onValue, off, update } from "firebase/database"
+import { get, ref, onValue, off, update, set } from "firebase/database"
 import { db } from "@/lib/firebase"
 import {
   Avatar,
@@ -63,35 +63,44 @@ export function UserNav() {
 
   useEffect(() => {
     const loggedInUserEmail = sessionStorage.getItem('userEmail');
-    if (loggedInUserEmail) {
-        const id = loggedInUserEmail.replace(/[.#$[\]]/g, "_");
-        setUserId(id);
-        const userRef = ref(db, 'users/' + id);
-        
-        const listener = onValue(userRef, (snapshot) => {
-            if(snapshot.exists()){
-                setUser(snapshot.val());
-            } else {
-                if (loggedInUserEmail.toLowerCase() === 'admin@example.com') {
-                     setUser({
-                        firstName: "แอดมิน",
-                        lastName: "",
-                        email: "admin@example.com",
-                        role: "Admin",
-                        credits: 0
-                    });
-                } else {
-                    sessionStorage.removeItem('userEmail');
-                    router.push('/login');
-                }
-            }
-        });
-
-        return () => off(userRef, 'value', listener);
-
-    } else {
-        router.push('/login');
+    if (!loggedInUserEmail) {
+      router.push('/login');
+      return;
     }
+
+    const id = loggedInUserEmail.replace(/[.#$[\]]/g, "_");
+    setUserId(id);
+    const userRef = ref(db, 'users/' + id);
+
+    const listener = onValue(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setUser(snapshot.val());
+      } else {
+        // Handle case where user is not in DB
+        // Special case for hardcoded admin
+        if (loggedInUserEmail.toLowerCase() === 'admin@example.com') {
+          const adminData = {
+            firstName: "แอดมิน",
+            lastName: "",
+            email: "admin@example.com",
+            role: "Admin",
+            credits: 0, // Initial credits
+            status: "Active"
+          };
+          // Set the data in Firebase so the listener will pick it up on subsequent loads
+          set(userRef, adminData).then(() => {
+             setUser(adminData);
+          });
+        } else {
+          // Regular user not found, something is wrong, log them out.
+          sessionStorage.removeItem('userEmail');
+          router.push('/login');
+        }
+      }
+    });
+
+    return () => off(userRef, 'value', listener);
+
   }, [router]);
 
 
