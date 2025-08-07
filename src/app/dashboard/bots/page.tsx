@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -50,6 +50,7 @@ export default function BotsPage() {
     const [newBotName, setNewBotName] = useState('');
     const [gitUrl, setGitUrl] = useState('');
     const [zipFile, setZipFile] = useState<File | null>(null);
+    const [projectUid, setProjectUid] = useState('');
     const [createError, setCreateError] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -172,6 +173,32 @@ export default function BotsPage() {
             setIsLoading(prev => ({ ...prev, create: false }));
         }
     };
+    
+    const handleJoinProject = async () => {
+        if (!projectUid || !userId) {
+            toast({ title: 'เกิดข้อผิดพลาด', description: 'กรุณากรอก Project UID', variant: 'destructive' });
+            return;
+        }
+        setIsLoading(prev => ({ ...prev, join: true }));
+        setCreateError(null);
+
+        // TODO: Implement API call to join a project
+        console.log(`User ${userId} wants to join project with UID: ${projectUid}`);
+        
+        // This is a placeholder for the actual API call.
+        // You would typically post the UID and userId to your backend.
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        toast({
+            title: "ส่งคำขอแล้ว",
+            description: "คำขอเข้าร่วมโปรเจกต์ของคุณถูกส่งแล้ว รอการตอบรับจากเจ้าของโปรเจกต์",
+        });
+
+        setIsLoading(prev => ({ ...prev, join: false }));
+        setIsCreateDialogOpen(false);
+        setProjectUid('');
+    };
+
 
     return (
         <div className="space-y-6">
@@ -183,62 +210,94 @@ export default function BotsPage() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[525px] bg-card border-border">
                     <DialogHeader>
-                        <DialogTitle>Create New Project</DialogTitle>
+                        <DialogTitle>จัดการโปรเจกต์</DialogTitle>
                         <DialogDescription>
-                            Choose a method to create your project.
+                            เลือกวิธีการสร้างหรือเข้าร่วมโปรเจกต์
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="bot-name" className="text-right">Project Name</Label>
-                            <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
-                        </div>
-                    </div>
-                    <Tabs defaultValue="empty" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />Empty</TabsTrigger>
-                            <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
-                            <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
+                    
+                    <Tabs defaultValue="create" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="create">สร้างโปรเจกต์ใหม่</TabsTrigger>
+                            <TabsTrigger value="join">เข้าร่วมโปรเจกต์</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="empty">
-                             <Card className="bg-transparent border-0 shadow-none">
-                                <CardContent className="pt-6">
-                                    <div className="text-sm text-muted-foreground">
-                                        <p>Create a blank project. You will need to add files later.</p>
-                                    </div>
-                                     <DialogFooter className="mt-4">
-                                        <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
-                                            {isLoading['create'] ? 'Creating...' : 'Create Project'}
-                                        </Button>
-                                    </DialogFooter>
-                                </CardContent>
-                            </Card>
+                        
+                        <TabsContent value="create">
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="bot-name" className="text-right">ชื่อโปรเจกต์</Label>
+                                    <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
+                                </div>
+                            </div>
+                            <Tabs defaultValue="empty" className="w-full">
+                                <TabsList className="grid w-full grid-cols-3">
+                                    <TabsTrigger value="empty"><FileCode className="mr-2 h-4 w-4" />ว่างเปล่า</TabsTrigger>
+                                    <TabsTrigger value="git"><GitBranch className="mr-2 h-4 w-4" />Git</TabsTrigger>
+                                    <TabsTrigger value="zip"><Upload className="mr-2 h-4 w-4" />ZIP</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="empty">
+                                     <Card className="bg-transparent border-0 shadow-none">
+                                        <CardContent className="pt-6">
+                                            <div className="text-sm text-muted-foreground">
+                                                <p>สร้างโปรเจกต์เปล่า คุณจะต้องเพิ่มไฟล์ในภายหลัง</p>
+                                            </div>
+                                             <DialogFooter className="mt-4">
+                                                <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
+                                                    {isLoading['create'] ? 'กำลังสร้าง...' : 'สร้างโปรเจกต์'}
+                                                </Button>
+                                            </DialogFooter>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                                <TabsContent value="git">
+                                     <Card className="bg-transparent border-0 shadow-none">
+                                        <CardContent className="pt-6 space-y-4">
+                                            <div>
+                                                <Label htmlFor="git-url">Git Repository URL</Label>
+                                                <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
+                                            </div>
+                                             <DialogFooter>
+                                                <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
+                                                    {isLoading['create'] ? 'กำลังโคลน...' : 'โคลนโปรเจกต์'}
+                                                </Button>
+                                            </DialogFooter>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                                <TabsContent value="zip">
+                                     <Card className="bg-transparent border-0 shadow-none">
+                                        <CardContent className="pt-6 space-y-4">
+                                            <div>
+                                                <Label htmlFor="zip-file">อัปโหลดไฟล์ .zip</Label>
+                                                <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
+                                            </div>
+                                            <DialogFooter>
+                                                <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
+                                                    {isLoading['create'] ? 'กำลังอัปโหลด...' : 'สร้างจาก ZIP'}
+                                                </Button>
+                                            </DialogFooter>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            </Tabs>
                         </TabsContent>
-                        <TabsContent value="git">
+
+                        <TabsContent value="join">
                              <Card className="bg-transparent border-0 shadow-none">
                                 <CardContent className="pt-6 space-y-4">
                                     <div>
-                                        <Label htmlFor="git-url">Git Repository URL</Label>
-                                        <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
+                                        <Label htmlFor="project-uid">Project UID</Label>
+                                        <Input 
+                                            id="project-uid" 
+                                            value={projectUid} 
+                                            onChange={e => setProjectUid(e.target.value)} 
+                                            placeholder="วาง Project UID ที่นี่" 
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-2">ขอ UID จากเจ้าของโปรเจกต์เพื่อส่งคำขอเข้าร่วม</p>
                                     </div>
                                      <DialogFooter>
-                                        <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
-                                            {isLoading['create'] ? 'Cloning...' : 'Clone Project'}
-                                        </Button>
-                                    </DialogFooter>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                        <TabsContent value="zip">
-                             <Card className="bg-transparent border-0 shadow-none">
-                                <CardContent className="pt-6 space-y-4">
-                                    <div>
-                                        <Label htmlFor="zip-file">Upload .zip file</Label>
-                                        <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
-                                    </div>
-                                    <DialogFooter>
-                                        <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
-                                            {isLoading['create'] ? 'Uploading...' : 'Create from ZIP'}
+                                        <Button type="button" onClick={handleJoinProject} disabled={isLoading['join'] || !projectUid}>
+                                            {isLoading['join'] ? 'กำลังเข้าร่วม...' : 'เข้าร่วมโปรเจกต์'}
                                         </Button>
                                     </DialogFooter>
                                 </CardContent>
