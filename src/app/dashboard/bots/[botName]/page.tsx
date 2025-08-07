@@ -176,7 +176,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
     };
     
     if (!isMounted) {
-        return null;
+        return <div className="flex flex-col h-full bg-black text-white" />;
     }
     
     const isRunning = statusData?.status === 'running';
