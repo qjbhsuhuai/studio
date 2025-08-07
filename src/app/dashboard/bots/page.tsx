@@ -11,15 +11,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardFooter
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -39,6 +33,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
+import { CpuIcon, MemoryStickIcon } from '@/components/icons';
 
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -254,101 +249,91 @@ export default function BotsPage() {
                 </DialogContent>
             </Dialog>
 
-            <Card className="bg-card/80 backdrop-blur-lg border-border">
-                <CardHeader>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="py-2 px-2 md:px-4 text-xs md:text-sm">Status</TableHead>
-                                <TableHead className="py-2 px-2 md:px-4 text-xs md:text-sm">Name</TableHead>
-                                <TableHead className="hidden md:table-cell py-2 px-4 text-xs md:text-sm">Type</TableHead>
-                                <TableHead className="hidden md:table-cell py-2 px-4 text-xs md:text-sm">CPU</TableHead>
-                                <TableHead className="hidden md:table-cell py-2 px-4 text-xs md:text-sm">Memory</TableHead>
-                                <TableHead className="text-right py-2 px-2 md:px-4"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {error && (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center text-destructive">
-                                        Could not load project data.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                            {!data && !error && (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center">
-                                        Loading...
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                            {data?.scripts?.map((bot: any) => (
-                                <TableRow key={bot.name} className="text-xs md:text-sm">
-                                    <TableCell className="py-2 px-2 md:px-4">
-                                        <Badge
-                                            variant={bot.status === 'running' ? 'default' : 'secondary'}
-                                            className={`text-xs ${bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}`}
-                                        >
-                                            {bot.status === 'running' ? (
-                                                <CheckCircle className="mr-1 h-3 w-3" />
-                                            ) : (
-                                                <XCircle className="mr-1 h-3 w-3" />
-                                            )}
-                                            <span className="hidden sm:inline">{bot.status === 'running' ? 'Online' : 'Offline'}</span>
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="font-medium py-2 px-2 md:px-4 truncate max-w-24 md:max-w-xs">{bot.name}</TableCell>
-                                    <TableCell className="hidden md:table-cell py-2 px-4">
-                                        <Badge variant="outline" className="text-xs">{bot.type}</Badge>
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell py-2 px-4">{bot.cpu || 'N/A'}</TableCell>
-                                    <TableCell className="hidden md:table-cell py-2 px-4">{bot.memory ? `${bot.memory} MB` : 'N/A'}</TableCell>
-                                    <TableCell className="text-right space-x-1 py-2 px-2 md:px-4">
-                                        <Button
-                                            size="sm"
-                                            variant={bot.status === 'running' ? 'destructive' : 'default'}
-                                            onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
-                                            disabled={isLoading[bot.name]}
-                                            className={`h-7 px-2 text-xs ${bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
-                                        >
-                                            {bot.status === 'running' ? <StopCircle className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                                            <span className="hidden md:inline ml-1">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
-                                        </Button>
-                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" asChild>
-                                            <Link href={`/dashboard/bots/${bot.name}`}>
-                                                <Terminal className="h-3 w-3" />
-                                                <span className="hidden md:inline ml-1">Console</span>
-                                            </Link>
-                                        </Button>
-                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" asChild>
-                                            <Link href={`/dashboard/bots/${bot.name}/files`}>
-                                                <Folder className="h-3 w-3" />
-                                                <span className="hidden md:inline ml-1">Files</span>
-                                            </Link>
-                                        </Button>
-                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" asChild>
-                                            <Link href={`/dashboard/bots/${bot.name}/settings`}>
-                                                <Settings className="h-3 w-3" />
-                                                <span className="hidden md:inline ml-1">Settings</span>
-                                            </Link>
-                                        </Button>
-                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openInstallDialog(bot.name)}>
-                                            <Package className="h-3 w-3" />
-                                            <span className="hidden md:inline ml-1">Install</span>
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
-                                            <Trash2 className="h-3 w-3" />
-                                            <span className="hidden md:inline ml-1">Delete</span>
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            {error && <p className="text-destructive text-center">Could not load project data.</p>}
+            {!data && !error && <p className="text-muted-foreground text-center">Loading projects...</p>}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {data?.scripts?.map((bot: any) => (
+                    <Card key={bot.name} className="flex flex-col bg-card/80 backdrop-blur-lg border-border">
+                        <CardHeader>
+                            <CardTitle className="flex justify-between items-start">
+                                <span className="truncate pr-4">{bot.name}</span>
+                                <Badge
+                                    variant={bot.status === 'running' ? 'default' : 'secondary'}
+                                    className={`text-xs ${bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}`}
+                                >
+                                    {bot.status === 'running' ? (
+                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                    ) : (
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                    )}
+                                    {bot.status === 'running' ? 'Online' : 'Offline'}
+                                </Badge>
+                            </CardTitle>
+                             <CardDescription>
+                                <Badge variant="outline" className="text-xs font-mono">{bot.type || 'unknown'}</Badge>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                                <CpuIcon className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <p className="text-muted-foreground text-xs">CPU</p>
+                                    <p className="font-semibold">{bot.cpu || 'N/A'}</p>
+                                </div>
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <MemoryStickIcon className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <p className="text-muted-foreground text-xs">Memory</p>
+                                    <p className="font-semibold">{bot.memory ? `${bot.memory} MB` : 'N/A'}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="grid grid-cols-3 gap-2 p-3">
+                             <div className="col-span-3 flex justify-between items-center gap-1">
+                                <Button
+                                    size="sm"
+                                    variant={bot.status === 'running' ? 'destructive' : 'default'}
+                                    onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
+                                    disabled={isLoading[bot.name]}
+                                    className={`w-full text-xs ${bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                                >
+                                    {bot.status === 'running' ? <StopCircle className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                    <span className="ml-1">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
+                                </Button>
+                                <Button size="sm" variant="outline" className="w-full text-xs" asChild>
+                                    <Link href={`/dashboard/bots/${bot.name}`}>
+                                        <Terminal className="h-4 w-4" />
+                                        <span className="ml-1">Console</span>
+                                    </Link>
+                                </Button>
+                             </div>
+                             <div className="col-span-3 flex justify-between items-center gap-1">
+                                <Button size="sm" variant="outline" className="w-full text-xs" asChild>
+                                    <Link href={`/dashboard/bots/${bot.name}/files`}>
+                                        <Folder className="h-4 w-4" />
+                                        <span className="ml-1">Files</span>
+                                    </Link>
+                                </Button>
+                                <Button size="sm" variant="outline" className="w-full text-xs" asChild>
+                                    <Link href={`/dashboard/bots/${bot.name}/settings`}>
+                                        <Settings className="h-4 w-4" />
+                                        <span className="ml-1">Settings</span>
+                                    </Link>
+                                </Button>
+                                <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => openInstallDialog(bot.name)}>
+                                    <Package className="h-4 w-4" />
+                                    <span className="ml-1">Install</span>
+                                </Button>
+                                <Button size="sm" variant="ghost" className="text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
             
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
               <DialogContent className="bg-card border-border">
