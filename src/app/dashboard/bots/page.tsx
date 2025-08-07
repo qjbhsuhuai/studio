@@ -261,9 +261,6 @@ export default function BotsPage() {
             <Card className="bg-card/80 backdrop-blur-lg border-border">
                 <CardHeader>
                     <CardTitle>Projects</CardTitle>
-                    <CardDescription>
-                        All available projects in the system.
-                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
