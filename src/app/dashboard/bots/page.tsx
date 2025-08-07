@@ -44,9 +44,13 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefined }) => {
     const calculateTimeLeft = () => {
-        if (expiryTimestamp === undefined || expiryTimestamp === null) return null;
+        if (expiryTimestamp === undefined || expiryTimestamp === null) {
+            return null;
+        }
         const difference = +new Date(expiryTimestamp) - +new Date();
-        if (difference <= 0) return { expired: true };
+        if (difference <= 0) {
+            return { expired: true };
+        }
 
         return {
             days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -63,18 +67,20 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
         if (expiryTimestamp === undefined || expiryTimestamp === null) {
             setTimeLeft(null);
             return;
-        };
+        }
         
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
+        // Set initial value
         setTimeLeft(calculateTimeLeft());
 
+        // Cleanup interval on component unmount
         return () => clearInterval(timer);
     }, [expiryTimestamp]);
 
-    if (timeLeft === undefined || timeLeft === null) {
+    if (timeLeft === null) {
         return <span className="font-mono text-muted-foreground">N/A</span>;
     }
     
@@ -163,19 +169,32 @@ export default function BotsPage() {
             const botData = snapshot.val();
             const ownedBotNames = botData ? Object.keys(botData) : [];
             
-            const apiScripts = apiData?.scripts || [];
+            // Start with the basic list of bots from Firebase
+            let mergedProjects: BotProject[] = ownedBotNames.map(botName => ({
+                name: botName,
+                status: 'stopped', // Default status
+                cpu: 'N/A',
+                memory: 'N/A',
+                isOwner: true,
+                expiresAt: undefined, // Default expiry
+            }));
 
-            const mergedProjects: BotProject[] = ownedBotNames.map(botName => {
-                const apiInfo = apiScripts.find((s: any) => s.name === botName);
-                return {
-                    name: botName,
-                    status: apiInfo?.status || 'stopped',
-                    cpu: apiInfo?.cpu || 'N/A',
-                    memory: apiInfo?.memory ? `${apiInfo.memory}MB` : 'N/A',
-                    expiresAt: apiInfo?.expiresAt,
-                    isOwner: true,
-                };
-            });
+            // If apiData is available, merge it in
+            if (apiData?.scripts) {
+                mergedProjects = mergedProjects.map(p => {
+                    const apiInfo = apiData.scripts.find((s: any) => s.name === p.name);
+                    if (apiInfo) {
+                        return {
+                            ...p,
+                            status: apiInfo.status || 'stopped',
+                            cpu: apiInfo.cpu || 'N/A',
+                            memory: apiInfo.memory ? `${apiInfo.memory}MB` : 'N/A',
+                            expiresAt: apiInfo.expiresAt, // This is the key part
+                        };
+                    }
+                    return p;
+                });
+            }
             
             setProjects(mergedProjects);
             setIsLoading(prev => ({ ...prev, page: false }));
@@ -183,7 +202,7 @@ export default function BotsPage() {
         
         return () => off(userBotsRef, 'value', listener);
 
-    }, [userId, apiData]);
+    }, [userId, apiData]); // Depends on userId and apiData
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -293,6 +312,7 @@ export default function BotsPage() {
                 permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
             });
             
+            // Re-fetch API data after creation to get the latest list including the new bot
             mutateApi();
 
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
