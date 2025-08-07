@@ -44,7 +44,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefined }) => {
     const calculateTimeLeft = () => {
-        if (expiryTimestamp === undefined || expiryTimestamp === null) {
+        if (expiryTimestamp === undefined || expiryTimestamp === null || expiryTimestamp === 0) {
             return null;
         }
         const difference = +new Date(expiryTimestamp) - +new Date();
@@ -64,7 +64,7 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
-        if (expiryTimestamp === undefined || expiryTimestamp === null) {
+        if (expiryTimestamp === undefined || expiryTimestamp === null || expiryTimestamp === 0) {
             setTimeLeft(null);
             return;
         }
@@ -73,10 +73,8 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
-        // Set initial value
         setTimeLeft(calculateTimeLeft());
 
-        // Cleanup interval on component unmount
         return () => clearInterval(timer);
     }, [expiryTimestamp]);
 
@@ -127,6 +125,7 @@ export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const { data: apiData, error: apiError, mutate: mutateApi } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
     
+    const [firebaseBots, setFirebaseBots] = useState<BotProject[]>([]);
     const [projects, setProjects] = useState<BotProject[]>([]);
     
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({page: true});
@@ -163,7 +162,7 @@ export default function BotsPage() {
         }
     }, []);
 
-    // Effect to fetch bot list from Firebase and merge with API data
+    // Effect to fetch bot list from Firebase
     useEffect(() => {
         if (!userId) return;
 
@@ -174,27 +173,44 @@ export default function BotsPage() {
             const botData = snapshot.val() || {};
             const botNames = Object.keys(botData);
 
-            const botsFromDb: BotProject[] = botNames.map(botName => {
-                 const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
-                 const firebaseInfo = botData[botName];
-
-                return {
-                    name: botName,
-                    status: apiInfo?.status || 'stopped',
-                    cpu: apiInfo?.cpu || 'N/A',
-                    memory: apiInfo?.memory || 'N/A',
-                    isOwner: true,
-                    expiresAt: firebaseInfo?.settings?.expiresAt || apiInfo?.expiresAt,
-                };
-            });
+            const botsFromDb: BotProject[] = botNames.map(botName => ({
+                name: botName,
+                status: 'stopped',
+                cpu: 'N/A',
+                memory: 'N/A',
+                isOwner: true,
+                expiresAt: botData[botName]?.settings?.expiresAt || 0,
+            }));
             
-            setProjects(botsFromDb);
+            setFirebaseBots(botsFromDb);
             setIsLoading(prev => ({ ...prev, page: false }));
         });
         
         return () => off(userBotsRef, 'value', listener);
 
-    }, [userId, apiData]); // Rerun when userId or apiData changes
+    }, [userId]);
+
+    // Effect to merge Firebase bots with live API data
+    useEffect(() => {
+        if (firebaseBots.length === 0 && !apiData?.scripts) {
+            setProjects([]);
+            return;
+        }
+
+        const mergedProjects = firebaseBots.map(fbBot => {
+            const apiInfo = apiData?.scripts?.find((s: any) => s.name === fbBot.name);
+            return {
+                ...fbBot,
+                status: apiInfo?.status || 'stopped',
+                cpu: apiInfo?.cpu || 'N/A',
+                memory: apiInfo?.memory || 'N/A',
+                // Prioritize Firebase expiresAt, but fallback to API if needed (should not happen in normal flow)
+                expiresAt: fbBot.expiresAt || apiInfo?.expiresAt,
+            };
+        });
+
+        setProjects(mergedProjects);
+    }, [firebaseBots, apiData]);
 
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
@@ -226,20 +242,24 @@ export default function BotsPage() {
         if (!selectedBot || !userId) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
+            // 1. Delete script files from server via API first
+            const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            
+            // 2. Delete the project data from Firebase
             const projectRef = ref(db, `bots/${userId}/${selectedBot}`);
             await set(projectRef, null);
-
-            const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
-             const data = await res.json();
-             if (!res.ok) throw new Error(data.message);
             
-             toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
+            toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
+
         } catch (err:any) {
              toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
             setIsLoading(prev => ({ ...prev, [selectedBot]: false }));
             setIsDeleteDialogOpen(false);
             setSelectedBot(null);
+            // Data will be re-fetched automatically by the onValue listener
         }
     }
     
