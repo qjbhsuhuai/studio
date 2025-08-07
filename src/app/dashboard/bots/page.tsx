@@ -159,7 +159,7 @@ export default function BotsPage() {
         }
     }, []);
 
-    useEffect(() => {
+     useEffect(() => {
         if (!userId) return;
 
         setIsLoading(prev => ({ ...prev, page: true }));
@@ -170,7 +170,7 @@ export default function BotsPage() {
             const ownedBotNames = botData ? Object.keys(botData) : [];
             
             // Start with the basic list of bots from Firebase
-            let mergedProjects: BotProject[] = ownedBotNames.map(botName => ({
+            let firebaseProjects: BotProject[] = ownedBotNames.map(botName => ({
                 name: botName,
                 status: 'stopped', // Default status
                 cpu: 'N/A',
@@ -179,30 +179,21 @@ export default function BotsPage() {
                 expiresAt: undefined, // Default expiry
             }));
 
-            // If apiData is available, merge it in
+            // If apiData is also available, merge it
             if (apiData?.scripts) {
-                mergedProjects = mergedProjects.map(p => {
+                 firebaseProjects = firebaseProjects.map(p => {
                     const apiInfo = apiData.scripts.find((s: any) => s.name === p.name);
-                    if (apiInfo) {
-                        return {
-                            ...p,
-                            status: apiInfo.status || 'stopped',
-                            cpu: apiInfo.cpu || 'N/A',
-                            memory: apiInfo.memory ? `${apiInfo.memory}MB` : 'N/A',
-                            expiresAt: apiInfo.expiresAt, // This is the key part
-                        };
-                    }
-                    return p;
+                    return apiInfo ? { ...p, ...apiInfo } : p;
                 });
             }
             
-            setProjects(mergedProjects);
+            setProjects(firebaseProjects);
             setIsLoading(prev => ({ ...prev, page: false }));
         });
         
         return () => off(userBotsRef, 'value', listener);
 
-    }, [userId, apiData]); // Depends on userId and apiData
+    }, [userId, apiData]);
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -215,7 +206,7 @@ export default function BotsPage() {
             const data = await res.json();
              if (!res.ok) throw new Error(data.message);
         } catch (err: any) {
-            toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
+            // No toast for success, only for errors
         } finally {
              setTimeout(() => {
                 mutateApi();
@@ -312,7 +303,6 @@ export default function BotsPage() {
                 permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
             });
             
-            // Re-fetch API data after creation to get the latest list including the new bot
             mutateApi();
 
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
