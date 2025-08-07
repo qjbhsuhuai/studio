@@ -15,8 +15,8 @@ import { usePathname } from 'next/navigation';
 function ConditionalLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Check if the current path is for a specific bot detail page or file manager
-  const isSpecialPage = /^\/dashboard\/bots\/[^/]+(\/(files|files\/editor))?$/.test(pathname || '');
+  // Check if the current path is for a specific bot detail page, file manager, editor, or settings
+  const isSpecialPage = /^\/dashboard\/bots\/[^/]+(\/(files|files\/editor|settings))?$/.test(pathname || '');
 
   if (isSpecialPage) {
     return (

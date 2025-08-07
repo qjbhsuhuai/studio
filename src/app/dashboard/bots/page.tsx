@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -95,7 +95,7 @@ export default function BotsPage() {
     };
 
     const confirmDelete = async () => {
-        if (!selectedBot) return;
+        if (!selectedBot || !userId) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
             const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
@@ -118,7 +118,7 @@ export default function BotsPage() {
     };
 
     const confirmInstall = async () => {
-        if (!selectedBot || !moduleName) return;
+        if (!selectedBot || !moduleName || !userId) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
              const res = await fetch(`/api/install`, {
@@ -326,6 +326,12 @@ export default function BotsPage() {
                                             <Link href={`/dashboard/bots/${bot.name}/files`}>
                                                 <Folder className="h-3 w-3" />
                                                 <span className="hidden md:inline ml-1">Files</span>
+                                            </Link>
+                                        </Button>
+                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" asChild>
+                                            <Link href={`/dashboard/bots/${bot.name}/settings`}>
+                                                <Settings className="h-3 w-3" />
+                                                <span className="hidden md:inline ml-1">Settings</span>
                                             </Link>
                                         </Button>
                                         <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openInstallDialog(bot.name)}>

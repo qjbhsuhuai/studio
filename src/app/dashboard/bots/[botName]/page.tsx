@@ -2,7 +2,7 @@
 "use client"
 import { useEffect, useState, useRef } from 'react';
 import useSWR from 'swr';
-import { Play, StopCircle, HardDrive, Cpu, Gauge, Send, ArrowLeft } from 'lucide-react';
+import { Play, StopCircle, HardDrive, Cpu, Gauge, Send, ArrowLeft, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -81,6 +82,7 @@ function BotDetailClient({ botName }: { botName: string }) {
     const [inputCommand, setInputCommand] = useState('');
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const router = useRouter();
 
     const { data: statusData, mutate: mutateStatus } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, (url) => fetcher(url).then(data => {
         return data.scripts.find((s: any) => s.name === botName);
@@ -155,6 +157,7 @@ function BotDetailClient({ botName }: { botName: string }) {
     }, [logs]);
 
     const handleAction = async (action: 'run' | 'stop') => {
+        if (!userId) return;
         try {
             const res = await fetch(`/api/${action}`, {
                 method: 'POST',
@@ -201,6 +204,14 @@ function BotDetailClient({ botName }: { botName: string }) {
                             <p className={cn("text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
                                 {statusData?.status || 'Offline'}
                             </p>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-9 w-9"
+                                onClick={() => router.push(`/dashboard/bots/${botName}/settings`)}
+                            >
+                                <Settings className="h-5 w-5" />
+                            </Button>
                             <Button 
                                 size="icon" 
                                 variant="ghost" 
