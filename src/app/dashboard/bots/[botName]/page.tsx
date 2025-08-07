@@ -84,7 +84,7 @@ function BotDetailClient({ params }: { params: { botName: string } }) {
         return data.scripts.find((s: any) => s.name === botName);
     }), { refreshInterval: 2000 });
 
-    const [uptime, setUptime] = useState(formatUptime(statusData?.startTime));
+    const [uptime, setUptime] = useState('00:00:00');
 
     useEffect(() => {
         const settingsRef = ref(db, 'admin/serverSettings/activeApiUrl');
