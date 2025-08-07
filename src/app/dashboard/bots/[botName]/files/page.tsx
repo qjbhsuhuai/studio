@@ -31,6 +31,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -56,12 +66,15 @@ export default function FileManagerPage() {
     const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
 
     // State for inputs
     const [newFileName, setNewFileName] = useState('');
     const [newFolderName, setNewFolderName] = useState('');
     const [filesToUpload, setFilesToUpload] = useState<FileList | null>(null);
     const [itemToRename, setItemToRename] = useState<FileOrFolder | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<FileOrFolder | null>(null);
     const [newItemName, setNewItemName] = useState('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,6 +145,7 @@ export default function FileManagerPage() {
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
             toast({ title: 'สำเร็จ', description: result.message });
+            mutate();
         } catch (err: any) {
             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
@@ -168,9 +182,14 @@ export default function FileManagerPage() {
         }
     };
     
-    const handleDelete = async (item: FileOrFolder) => {
-        const fullItemPath = currentPath === '.' ? item.name : `${currentPath}/${item.name}`;
-        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ '${item.name}'? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+    const openDeleteDialog = (item: FileOrFolder) => {
+        setItemToDelete(item);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete || !userId) return;
+        const fullItemPath = currentPath === '.' ? itemToDelete.name : `${currentPath}/${itemToDelete.name}`;
 
         try {
             const res = await fetch('/api/files/delete', {
@@ -184,6 +203,9 @@ export default function FileManagerPage() {
             mutate();
         } catch (err: any) {
             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setItemToDelete(null);
         }
     };
 
@@ -271,7 +293,7 @@ export default function FileManagerPage() {
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             <span>Rename</span>
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item)}>
+                                                        <DropdownMenuItem className="text-destructive" onClick={() => openDeleteDialog(item)}>
                                                             <Trash2 className="mr-2 h-4 w-4" />
                                                             <span>Delete</span>
                                                         </DropdownMenuItem>
@@ -359,6 +381,22 @@ export default function FileManagerPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Dialog */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>คุณแน่ใจหรือไม่?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        การกระทำนี้ไม่สามารถย้อนกลับได้ '{itemToDelete?.name}' จะถูกลบอย่างถาวร
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setItemToDelete(null)}>ยกเลิก</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmDelete}>ยืนยัน</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
 
             <footer className="p-4 border-t border-gray-800 grid grid-cols-3 gap-2">
