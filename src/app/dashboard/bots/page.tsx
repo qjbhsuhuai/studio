@@ -44,7 +44,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefined }) => {
     const calculateTimeLeft = () => {
-        if (!expiryTimestamp) return null;
+        if (expiryTimestamp === undefined || expiryTimestamp === null) return null;
         const difference = +new Date(expiryTimestamp) - +new Date();
         if (difference <= 0) return { expired: true };
 
@@ -60,7 +60,7 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
-        if (!expiryTimestamp) {
+        if (expiryTimestamp === undefined || expiryTimestamp === null) {
             setTimeLeft(null);
             return;
         };
@@ -69,13 +69,12 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
-        // Set initial value
         setTimeLeft(calculateTimeLeft());
 
         return () => clearInterval(timer);
     }, [expiryTimestamp]);
 
-    if (!timeLeft) {
+    if (timeLeft === undefined || timeLeft === null) {
         return <span className="font-mono text-muted-foreground">N/A</span>;
     }
     
@@ -158,7 +157,6 @@ export default function BotsPage() {
         if (!userId) return;
 
         setIsLoading(prev => ({ ...prev, page: true }));
-
         const userBotsRef = ref(db, `bots/${userId}`);
 
         const listener = onValue(userBotsRef, (snapshot) => {
@@ -223,9 +221,7 @@ export default function BotsPage() {
              const data = await res.json();
              if (!res.ok) throw new Error(data.message);
             
-             setProjects(prev => prev.filter(p => p.name !== selectedBot));
-
-            toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
+             toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
         } catch (err:any) {
              toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
@@ -284,16 +280,9 @@ export default function BotsPage() {
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
             
-            // --- Start of Changes ---
-            
-            // 1. Calculate new credits and expiry time on the client
             const newCredits = currentCredits - totalCost;
-            const expiryTimestamp = new Date().getTime() + (creationDays * 24 * 60 * 60 * 1000);
-
-            // 2. Update user credits in Firebase
             await update(userRef, { credits: newCredits });
 
-            // 3. Create project settings in Firebase
             const settingsRef = ref(db, `bots/${userId}/${newBotName}/settings`);
             const newUid = `uid-${newBotName}-${Date.now()}`;
             await set(settingsRef, {
@@ -303,22 +292,8 @@ export default function BotsPage() {
                 ownerId: userId,
                 permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
             });
-
-            // 4. Update local state immediately for instant UI feedback
-            const newProject: BotProject = {
-                name: newBotName,
-                status: 'stopped',
-                cpu: 'N/A',
-                memory: 'N/A',
-                expiresAt: expiryTimestamp, // Use client-calculated expiry
-                isOwner: true
-            };
-            setProjects(prevProjects => [...prevProjects, newProject]);
             
-            // 5. Refresh API data in the background
             mutateApi();
-
-            // --- End of Changes ---
 
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
             setIsCreateDialogOpen(false);
@@ -635,5 +610,4 @@ export default function BotsPage() {
 
         </div>
     );
-
-    
+}
