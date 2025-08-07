@@ -26,7 +26,8 @@ function FileEditor() {
         if (!filePath || !botName) return;
 
         setIsLoading(true);
-        fetch(`/api/files/${botName}/content?path=${encodeURIComponent(filePath)}`)
+        // Adjusted API path to match the provided server code
+        fetch(`/api/file/content?botName=${encodeURIComponent(botName)}&fileName=${encodeURIComponent(filePath)}`)
             .then(res => {
                 if (!res.ok) {
                     throw new Error('Failed to fetch file content');
@@ -54,10 +55,11 @@ function FileEditor() {
 
         setIsSaving(true);
         try {
-            const res = await fetch(`/api/files/${botName}/content`, {
+            // Adjusted API path and body to match the provided server code
+            const res = await fetch(`/api/file/content`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path: filePath, content }),
+                body: JSON.stringify({ botName: botName, fileName: filePath, content }),
             });
 
             if (!res.ok) {
