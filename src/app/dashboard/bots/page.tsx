@@ -167,11 +167,8 @@ export default function BotsPage() {
             const botData = snapshot.val();
             const ownedBots = botData ? Object.keys(botData) : [];
             
-            // Filter apiData to only include owned bots
-            const userApiScripts = apiData?.scripts?.filter((s: any) => ownedBots.includes(s.name)) || [];
-
             const botList: BotProject[] = ownedBots.map(botName => {
-                 const apiInfo = userApiScripts.find((s: any) => s.name === botName);
+                 const apiInfo = apiData?.scripts?.find((s: any) => s.name === botName);
                  return {
                     name: botName,
                     status: apiInfo?.status || 'stopped',
@@ -189,27 +186,6 @@ export default function BotsPage() {
         return () => off(userBotsRef, 'value', listener);
 
     }, [userId, apiData]);
-
-     useEffect(() => {
-        if (apiData?.scripts && projects.length > 0) {
-            setProjects(prevProjects => {
-                return prevProjects.map(p => {
-                    const apiInfo = apiData.scripts.find((s: any) => s.name === p.name);
-                    if (apiInfo) {
-                        return {
-                            ...p,
-                            status: apiInfo.status || 'stopped',
-                            cpu: apiInfo.cpu || 'N/A',
-                            memory: apiInfo.memory ? `${apiInfo.memory}MB` : 'N/A',
-                            expiresAt: apiInfo.expiresAt,
-                        };
-                    }
-                    return p;
-                });
-            });
-        }
-    }, [apiData, projects]);
-
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -645,5 +621,3 @@ export default function BotsPage() {
         </div>
     );
 }
-
-    
