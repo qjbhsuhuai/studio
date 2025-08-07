@@ -446,9 +446,9 @@ export default function BotsPage() {
             {error && <p className="text-destructive text-center">Could not load project data.</p>}
             {!data && !error && <p className="text-muted-foreground text-center">Loading projects...</p>}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex overflow-x-auto gap-6 pb-4">
                 {data?.scripts?.map((bot: any) => (
-                    <Card key={bot.name} className="flex flex-col bg-card/80 backdrop-blur-lg border-border">
+                    <Card key={bot.name} className="flex flex-col bg-card/80 backdrop-blur-lg border-border flex-shrink-0 w-[340px] sm:w-[360px]">
                         <CardHeader>
                             <CardTitle className="flex justify-between items-start">
                                 <span className="truncate pr-4">{bot.name}</span>
@@ -552,6 +552,8 @@ export default function BotsPage() {
         </div>
     );
 }
+
+    
 
     
 
