@@ -23,14 +23,16 @@ function FileEditor() {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (!filePath || !botName) return;
+        if (!filePath || !botName) {
+            setIsLoading(false);
+            return;
+        }
 
         setIsLoading(true);
-        // Adjusted API path to match the provided server code
         fetch(`/api/file/content?botName=${encodeURIComponent(botName)}&fileName=${encodeURIComponent(filePath)}`)
             .then(res => {
                 if (!res.ok) {
-                    throw new Error('Failed to fetch file content');
+                     return res.json().then(err => { throw new Error(err.message || 'Failed to fetch file content') });
                 }
                 return res.json();
             })
@@ -38,12 +40,14 @@ function FileEditor() {
                 setContent(data.content);
             })
             .catch(error => {
+                console.error("Error loading file:", error);
                 toast({
                     title: "Error loading file",
                     description: error.message,
                     variant: "destructive"
                 });
-                router.back();
+                // Optional: go back if file fails to load
+                // router.back(); 
             })
             .finally(() => {
                 setIsLoading(false);
@@ -55,7 +59,6 @@ function FileEditor() {
 
         setIsSaving(true);
         try {
-            // Adjusted API path and body to match the provided server code
             const res = await fetch(`/api/file/content`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -122,7 +125,7 @@ function FileEditor() {
 
 export default function FileEditorPage() {
     return (
-        <Suspense fallback={<div className="flex items-center justify-center h-full">Loading editor...</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-full bg-black text-white">Loading editor...</div>}>
             <FileEditor />
         </Suspense>
     )
