@@ -36,8 +36,17 @@ export default function FileManagerPage() {
     const router = useRouter();
     const botName = params.botName as string;
     const [currentPath, setCurrentPath] = useState('.');
+    const [userId, setUserId] = useState<string | null>(null);
     
-    const { data, error, mutate } = useSWR(`/api/files/${botName}?path=${encodeURIComponent(currentPath)}`, fetcher);
+    useEffect(() => {
+        const userEmail = sessionStorage.getItem('userEmail');
+        if (userEmail) {
+            const id = userEmail.replace(/[.#$[\]]/g, "_");
+            setUserId(id);
+        }
+    }, []);
+
+    const { data, error, mutate } = useSWR(userId ? `/api/files/${botName}?path=${encodeURIComponent(currentPath)}&userId=${userId}` : null, fetcher);
     const { toast } = useToast();
 
     const handleItemClick = (item: FileOrFolder) => {

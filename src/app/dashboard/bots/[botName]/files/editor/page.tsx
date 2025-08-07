@@ -21,15 +21,24 @@ function FileEditor() {
     const [content, setContent] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
+
+     useEffect(() => {
+        const userEmail = sessionStorage.getItem('userEmail');
+        if (userEmail) {
+            const id = userEmail.replace(/[.#$[\]]/g, "_");
+            setUserId(id);
+        }
+    }, []);
 
     useEffect(() => {
-        if (!filePath || !botName) {
+        if (!filePath || !botName || !userId) {
             setIsLoading(false);
             return;
         }
 
         setIsLoading(true);
-        fetch(`/api/file/content?botName=${encodeURIComponent(botName)}&fileName=${encodeURIComponent(filePath)}`)
+        fetch(`/api/file/content?botName=${encodeURIComponent(botName)}&fileName=${encodeURIComponent(filePath)}&userId=${userId}`)
             .then(res => {
                 if (!res.ok) {
                      return res.json().then(err => { throw new Error(err.message || 'Failed to fetch file content') });
@@ -52,17 +61,17 @@ function FileEditor() {
             .finally(() => {
                 setIsLoading(false);
             });
-    }, [filePath, botName, toast, router]);
+    }, [filePath, botName, userId, toast, router]);
 
     const handleSave = async () => {
-        if (!filePath || !botName) return;
+        if (!filePath || !botName || !userId) return;
 
         setIsSaving(true);
         try {
             const res = await fetch(`/api/file/content`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ botName: botName, fileName: filePath, content }),
+                body: JSON.stringify({ botName: botName, fileName: filePath, content, userId }),
             });
 
             if (!res.ok) {

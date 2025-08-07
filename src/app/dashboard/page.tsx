@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useState, useEffect } from 'react';
 import useSWR from 'swr'
 import Link from "next/link"
 import { CpuIcon, MemoryStickIcon, GaugeIcon, BotIcon } from "@/components/icons"
@@ -18,7 +19,17 @@ import { Button } from '@/components/ui/button'
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 export default function DashboardPage() {
-    const { data: scriptsData } = useSWR('/api/scripts', fetcher, { refreshInterval: 5000 });
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const userEmail = sessionStorage.getItem('userEmail');
+        if (userEmail) {
+            const id = userEmail.replace(/[.#$[\]]/g, "_");
+            setUserId(id);
+        }
+    }, []);
+
+    const { data: scriptsData } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
     const { data: envData } = useSWR('/api/environment', fetcher);
 
     const totalBots = scriptsData?.scripts?.length || 0;

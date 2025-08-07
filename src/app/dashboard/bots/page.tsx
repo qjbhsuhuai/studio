@@ -44,7 +44,8 @@ import { useToast } from "@/hooks/use-toast"
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function BotsPage() {
-    const { data, error, mutate } = useSWR('/api/scripts', fetcher, { refreshInterval: 3000 });
+    const [userId, setUserId] = useState<string | null>(null);
+    const { data, error, mutate } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 3000 });
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
@@ -55,7 +56,17 @@ export default function BotsPage() {
     const [gitUrl, setGitUrl] = useState('');
     const [zipFile, setZipFile] = useState<File | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
-    const { toast } = useToast()
+    const { toast } = useToast();
+
+     useEffect(() => {
+        const userEmail = sessionStorage.getItem('userEmail');
+        if (userEmail) {
+            const id = userEmail.replace(/[.#$[\]]/g, "_");
+            setUserId(id);
+        } else {
+            // Handle case where user is not logged in
+        }
+    }, []);
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -63,7 +74,7 @@ export default function BotsPage() {
             const res = await fetch(`/api/${action}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ script: botName }),
+                body: JSON.stringify({ script: botName, userId: userId }),
             });
             const data = await res.json();
              if (!res.ok) throw new Error(data.message);
@@ -87,7 +98,7 @@ export default function BotsPage() {
         if (!selectedBot) return;
         setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
         try {
-            const res = await fetch(`/api/scripts/${selectedBot}`, { method: 'DELETE' });
+            const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
              const data = await res.json();
              if (!res.ok) throw new Error(data.message);
             toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
@@ -113,7 +124,7 @@ export default function BotsPage() {
              const res = await fetch(`/api/install`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ botName: selectedBot, module: moduleName }),
+                body: JSON.stringify({ botName: selectedBot, module: moduleName, userId: userId }),
             });
              const data = await res.json();
              if (!res.ok) throw new Error(data.message);
@@ -128,11 +139,16 @@ export default function BotsPage() {
     };
 
     const handleCreateProject = async (creationMethod: 'empty' | 'git' | 'zip') => {
+        if (!userId) {
+            toast({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถระบุผู้ใช้ได้ กรุณาล็อกอินใหม่อีกครั้ง', variant: 'destructive' });
+            return;
+        }
         setIsLoading(prev => ({ ...prev, create: true }));
         setCreateError(null);
         const formData = new FormData();
         formData.append('botName', newBotName);
         formData.append('creationMethod', creationMethod);
+        formData.append('userId', userId);
 
         if (creationMethod === 'git') {
             formData.append('gitUrl', gitUrl);
@@ -375,5 +391,3 @@ export default function BotsPage() {
         </div>
     );
 }
-
-    

@@ -80,8 +80,9 @@ function BotDetailClient({ botName }: { botName: string }) {
     const { toast } = useToast();
     const [inputCommand, setInputCommand] = useState('');
     const [isMounted, setIsMounted] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
 
-    const { data: statusData, mutate: mutateStatus } = useSWR(`/api/scripts`, (url) => fetcher(url).then(data => {
+    const { data: statusData, mutate: mutateStatus } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, (url) => fetcher(url).then(data => {
         return data.scripts.find((s: any) => s.name === botName);
     }), { refreshInterval: 2000 });
 
@@ -89,6 +90,11 @@ function BotDetailClient({ botName }: { botName: string }) {
     
     useEffect(() => {
         setIsMounted(true);
+        const userEmail = sessionStorage.getItem('userEmail');
+        if (userEmail) {
+            const id = userEmail.replace(/[.#$[\]]/g, "_");
+            setUserId(id);
+        }
     }, []);
 
     useEffect(() => {
@@ -112,9 +118,9 @@ function BotDetailClient({ botName }: { botName: string }) {
     }, [statusData, isMounted]);
     
     useEffect(() => {
-        if (!activeApiUrl || !isMounted) return;
+        if (!activeApiUrl || !isMounted || !userId) return;
 
-        fetch(`/api/logs/${botName}`)
+        fetch(`/api/logs/${botName}?userId=${userId}`)
             .then(res => res.json())
             .then(data => setLogs(data.logs || 'ยังไม่มี Log สำหรับโปรเจกต์นี้\n'));
 
@@ -125,7 +131,7 @@ function BotDetailClient({ botName }: { botName: string }) {
             
             ws.current = new WebSocket(wsUrl);
 
-            ws.current.onopen = () => ws.current?.send(JSON.stringify({ type: 'connect', botName }));
+            ws.current.onopen = () => ws.current?.send(JSON.stringify({ type: 'connect', botName, userId }));
             ws.current.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
@@ -142,7 +148,7 @@ function BotDetailClient({ botName }: { botName: string }) {
         }
 
         return () => ws.current?.close();
-    }, [botName, activeApiUrl, isMounted]);
+    }, [botName, activeApiUrl, isMounted, userId]);
 
     useEffect(() => {
         if (logContainerRef.current) logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
@@ -153,7 +159,7 @@ function BotDetailClient({ botName }: { botName: string }) {
             const res = await fetch(`/api/${action}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ script: botName }),
+                body: JSON.stringify({ script: botName, userId }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
