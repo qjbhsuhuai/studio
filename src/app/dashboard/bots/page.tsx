@@ -124,7 +124,10 @@ type BotProject = {
 export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const { data: apiData, error: apiError, mutate: mutateApi } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 5000 });
+    
+    const [firebaseBots, setFirebaseBots] = useState<BotProject[]>([]);
     const [projects, setProjects] = useState<BotProject[]>([]);
+    
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({page: true});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -159,7 +162,8 @@ export default function BotsPage() {
         }
     }, []);
 
-     useEffect(() => {
+    // Effect to fetch bot list from Firebase
+    useEffect(() => {
         if (!userId) return;
 
         setIsLoading(prev => ({ ...prev, page: true }));
@@ -169,31 +173,38 @@ export default function BotsPage() {
             const botData = snapshot.val();
             const ownedBotNames = botData ? Object.keys(botData) : [];
             
-            // Start with the basic list of bots from Firebase
-            let firebaseProjects: BotProject[] = ownedBotNames.map(botName => ({
+            const botsFromDb: BotProject[] = ownedBotNames.map(botName => ({
                 name: botName,
                 status: 'stopped', // Default status
                 cpu: 'N/A',
                 memory: 'N/A',
                 isOwner: true,
-                expiresAt: undefined, // Default expiry
+                expiresAt: undefined, // Default expiry, will be merged
             }));
-
-            // If apiData is also available, merge it
-            if (apiData?.scripts) {
-                 firebaseProjects = firebaseProjects.map(p => {
-                    const apiInfo = apiData.scripts.find((s: any) => s.name === p.name);
-                    return apiInfo ? { ...p, ...apiInfo } : p;
-                });
-            }
             
-            setProjects(firebaseProjects);
+            setFirebaseBots(botsFromDb);
             setIsLoading(prev => ({ ...prev, page: false }));
         });
         
         return () => off(userBotsRef, 'value', listener);
 
-    }, [userId, apiData]);
+    }, [userId]);
+
+    // Effect to merge Firebase bots with API data
+    useEffect(() => {
+        if (firebaseBots.length === 0 && !apiData?.scripts) {
+            setProjects([]);
+            return;
+        }
+
+        const mergedProjects = firebaseBots.map(p => {
+            const apiInfo = apiData?.scripts?.find((s: any) => s.name === p.name);
+            return apiInfo ? { ...p, ...apiInfo } : p;
+        });
+
+        setProjects(mergedProjects);
+
+    }, [firebaseBots, apiData]);
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
         setIsLoading(prev => ({ ...prev, [botName]: true }));
@@ -206,7 +217,7 @@ export default function BotsPage() {
             const data = await res.json();
              if (!res.ok) throw new Error(data.message);
         } catch (err: any) {
-            // No toast for success, only for errors
+             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
              setTimeout(() => {
                 mutateApi();
@@ -303,7 +314,8 @@ export default function BotsPage() {
                 permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
             });
             
-            mutateApi();
+            // Just mutate, don't update state directly to avoid race conditions
+            mutateApi(); 
 
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
             setIsCreateDialogOpen(false);
@@ -621,3 +633,5 @@ export default function BotsPage() {
         </div>
     );
 }
+
+    
