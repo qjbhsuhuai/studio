@@ -89,11 +89,13 @@ const TimeLeftDisplay = ({ expiryTimestamp }: { expiryTimestamp: number | undefi
     }
 
     const formatTime = (value: number) => value.toString().padStart(2, '0');
+    
+    const days = timeLeft.days > 0 ? `${timeLeft.days}d ` : '';
+    const time = `${formatTime(timeLeft.hours)}:${formatTime(timeLeft.minutes)}:${formatTime(timeLeft.seconds)}`;
 
     return (
         <span className="font-mono">
-            {timeLeft.days > 0 && `${timeLeft.days}d `}
-            {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
+           {days}{time}
         </span>
     );
 };
@@ -192,18 +194,11 @@ export default function BotsPage() {
 
     // Effect to merge Firebase bots with API data
     useEffect(() => {
-        if (firebaseBots.length === 0 && !apiData?.scripts) {
-            setProjects([]);
-            return;
-        }
-
         const mergedProjects = firebaseBots.map(p => {
             const apiInfo = apiData?.scripts?.find((s: any) => s.name === p.name);
             return apiInfo ? { ...p, ...apiInfo } : p;
         });
-
         setProjects(mergedProjects);
-
     }, [firebaseBots, apiData]);
 
     const handleAction = async (action: 'run' | 'stop', botName: string) => {
@@ -633,5 +628,3 @@ export default function BotsPage() {
         </div>
     );
 }
-
-    
