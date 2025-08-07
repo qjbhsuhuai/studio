@@ -52,49 +52,6 @@ function ConditionalLayout({ children }: { children: ReactNode }) {
         </header>
 
         <div className="flex flex-1">
-            <aside className="hidden w-16 flex-col border-r bg-background/50 sm:flex">
-                 <TooltipProvider>
-                    <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-                        <Link
-                          href="/dashboard"
-                          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-                        >
-                          <BotIcon className="h-4 w-4 transition-all group-hover:scale-110" />
-                          <span className="sr-only">BotFarm</span>
-                        </Link>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Link
-                                href="/dashboard"
-                                className={cn(
-                                    "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                                    pathname === '/dashboard' && "bg-accent text-accent-foreground"
-                                )}
-                                >
-                                <LayoutDashboard className="h-5 w-5" />
-                                <span className="sr-only">Dashboard</span>
-                                </Link>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">Dashboard</TooltipContent>
-                        </Tooltip>
-                         <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Link
-                                href="/dashboard/bots"
-                                className={cn(
-                                    "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                                    (pathname === '/dashboard/bots' || pathname?.startsWith('/dashboard/bots/')) && "bg-accent text-accent-foreground"
-                                )}
-                                >
-                                <Bot className="h-5 w-5" />
-                                <span className="sr-only">Projects</span>
-                                </Link>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">Projects</TooltipContent>
-                        </Tooltip>
-                    </nav>
-                </TooltipProvider>
-            </aside>
             <main className="flex flex-1 flex-col overflow-auto">
               <div className="flex flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                 {children}
