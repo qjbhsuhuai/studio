@@ -37,6 +37,7 @@ import { CpuIcon, MemoryStickIcon } from '@/components/icons';
 import { get, ref, onValue, off, push, query, orderByChild, equalTo, find, set } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
 
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -312,7 +313,7 @@ export default function BotsPage() {
 
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 fixed bottom-8 right-8 z-20 shadow-lg">
@@ -446,15 +447,14 @@ export default function BotsPage() {
             {error && <p className="text-destructive text-center">Could not load project data.</p>}
             {!data && !error && <p className="text-muted-foreground text-center">Loading projects...</p>}
             
-            <div className="flex overflow-x-auto gap-6 pb-4">
+            <div className="space-y-2">
                 {data?.scripts?.map((bot: any) => (
-                    <Card key={bot.name} className="flex flex-col bg-card/80 backdrop-blur-lg border-border flex-shrink-0 w-[340px] sm:w-[360px]">
-                        <CardHeader>
-                            <CardTitle className="flex justify-between items-start">
-                                <span className="truncate pr-4">{bot.name}</span>
+                    <div key={bot.name} className="flex flex-col sm:flex-row items-center justify-between p-3 bg-card/80 backdrop-blur-lg border border-border rounded-lg gap-4">
+                        <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-3">
                                 <Badge
                                     variant={bot.status === 'running' ? 'default' : 'secondary'}
-                                    className={`text-xs ${bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}`}
+                                    className={`h-6 text-xs ${bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}`}
                                 >
                                     {bot.status === 'running' ? (
                                         <CheckCircle className="mr-1 h-3 w-3" />
@@ -463,74 +463,59 @@ export default function BotsPage() {
                                     )}
                                     {bot.status === 'running' ? 'Online' : 'Offline'}
                                 </Badge>
-                            </CardTitle>
-                             <CardDescription>
-                                <Badge variant="outline" className="text-xs font-mono">{bot.type || 'unknown'}</Badge>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow grid grid-cols-3 gap-4 text-sm">
-                            <div className="flex items-center gap-2">
-                                <CpuIcon className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                    <p className="text-muted-foreground text-xs">CPU</p>
-                                    <p className="font-semibold">{bot.cpu || 'N/A'}</p>
-                                </div>
+                                <span className="font-semibold truncate">{bot.name}</span>
                             </div>
-                             <div className="flex items-center gap-2">
-                                <MemoryStickIcon className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                    <p className="text-muted-foreground text-xs">Memory</p>
-                                    <p className="font-semibold">{bot.memory ? `${bot.memory} MB` : 'N/A'}</p>
-                                </div>
-                            </div>
-                            {bot.status === 'running' && bot.expiresAt && (
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-muted-foreground" />
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">เวลาที่เหลือ</p>
-                                        <p className="font-semibold font-mono"><CountdownTimer expiryTimestamp={bot.expiresAt} /></p>
+                             <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                                 {bot.status === 'running' && bot.expiresAt && (
+                                    <div className="flex items-center gap-1.5 font-mono">
+                                        <Clock className="h-3 w-3" />
+                                        <CountdownTimer expiryTimestamp={bot.expiresAt} />
                                     </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                    <CpuIcon className="h-3 w-3" />
+                                    <span>{bot.cpu || 'N/A'}%</span>
                                 </div>
-                            )}
-                        </CardContent>
-                        <CardFooter className="grid grid-cols-3 gap-2 p-3">
-                             <div className="col-span-3 flex justify-between items-center gap-1">
-                                <Button
-                                    size="sm"
-                                    variant={bot.status === 'running' ? 'destructive' : 'default'}
-                                    onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
-                                    disabled={isLoading[bot.name]}
-                                    className={`w-full text-xs ${bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
-                                >
-                                    {bot.status === 'running' ? <StopCircle className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                                    <span className="ml-1">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
-                                </Button>
-                                <Button size="sm" variant="outline" className="w-full text-xs" asChild>
-                                    <Link href={`/dashboard/bots/${bot.name}`}>
-                                        <Terminal className="h-4 w-4" />
-                                        <span className="ml-1">Console</span>
-                                    </Link>
-                                </Button>
+                                <div className="flex items-center gap-1.5">
+                                    <MemoryStickIcon className="h-3 w-3" />
+                                    <span>{bot.memory ? `${bot.memory}MB` : 'N/A'}</span>
+                                </div>
                              </div>
-                             <div className="col-span-3 flex justify-between items-center gap-1">
-                                <Button size="sm" variant="outline" className="w-full text-xs" asChild>
-                                    <Link href={`/dashboard/bots/${bot.name}/files`}>
-                                        <Folder className="h-4 w-4" />
-                                        <span className="ml-1">Files</span>
-                                    </Link>
-                                </Button>
-                                <Button size="sm" variant="outline" className="w-full text-xs" asChild>
-                                    <Link href={`/dashboard/bots/${bot.name}/settings`}>
-                                        <Settings className="h-4 w-4" />
-                                        <span className="ml-1">Settings</span>
-                                    </Link>
-                                </Button>
-                                <Button size="sm" variant="ghost" className="text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </CardFooter>
-                    </Card>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0 w-full sm:w-auto">
+                            <Button
+                                size="sm"
+                                variant={bot.status === 'running' ? 'destructive' : 'default'}
+                                onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
+                                disabled={isLoading[bot.name]}
+                                className={cn("w-full sm:w-auto text-xs", bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700')}
+                            >
+                                {bot.status === 'running' ? <StopCircle /> : <Play />}
+                                <span className="hidden sm:inline ml-1">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
+                            </Button>
+                            <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs" asChild>
+                                <Link href={`/dashboard/bots/${bot.name}`}>
+                                    <Terminal />
+                                    <span className="hidden sm:inline ml-1">Console</span>
+                                </Link>
+                            </Button>
+                             <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs" asChild>
+                                <Link href={`/dashboard/bots/${bot.name}/files`}>
+                                    <Folder />
+                                     <span className="hidden sm:inline ml-1">Files</span>
+                                </Link>
+                            </Button>
+                             <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs" asChild>
+                                <Link href={`/dashboard/bots/${bot.name}/settings`}>
+                                    <Settings />
+                                     <span className="hidden sm:inline ml-1">Settings</span>
+                                </Link>
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
+                                <Trash2 />
+                            </Button>
+                        </div>
+                    </div>
                 ))}
             </div>
             
