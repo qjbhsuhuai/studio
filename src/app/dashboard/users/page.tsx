@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MoreHorizontal, Trash2, Ban, CheckCircle, XCircle, ShieldX } from "lucide-react"
+import { MoreHorizontal, Trash2, Ban, CheckCircle, ShieldX, Globe } from "lucide-react"
 import { get, ref, set, onValue, off, remove } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
@@ -54,6 +54,7 @@ type User = {
   status: "Active" | "Banned" | "Pending"
   avatar: string
   credits?: number
+  registeredIp?: string
 }
 
 export default function UsersPage() {
@@ -197,20 +198,21 @@ export default function UsersPage() {
                   <TableHead className="hidden sm:table-cell">บทบาท</TableHead>
                   <TableHead className="hidden sm:table-cell">สถานะ</TableHead>
                   <TableHead className="hidden md:table-cell">เครดิต</TableHead>
+                  <TableHead className="hidden lg:table-cell">Registered IP</TableHead>
                   <TableHead className="text-right">การกระทำ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                    <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       กำลังโหลด...
                     </TableCell>
                   </TableRow>
                 )}
                 {!isLoading && users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       ไม่มีผู้ใช้
                     </TableCell>
                   </TableRow>
@@ -245,6 +247,9 @@ export default function UsersPage() {
                      </TableCell>
                      <TableCell className="hidden md:table-cell">
                         {user.credits ?? 0}
+                     </TableCell>
+                     <TableCell className="hidden lg:table-cell font-mono text-xs">
+                        {user.registeredIp || 'N/A'}
                      </TableCell>
                     <TableCell className="text-right">
                        {user.status === 'Pending' ? (
