@@ -268,7 +268,7 @@ export default function BotsPage() {
                                     </TableCell>
                                 </TableRow>
                             )}
-                            {data?.scripts.map((bot: any) => (
+                            {data?.scripts?.map((bot: any) => (
                                 <TableRow key={bot.name} className="text-xs md:text-sm">
                                     <TableCell className="py-2 px-2 md:px-4">
                                         <Badge
