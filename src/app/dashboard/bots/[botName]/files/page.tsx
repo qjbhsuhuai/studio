@@ -41,7 +41,7 @@ export default function FileManagerPage() {
     const { toast } = useToast();
 
     const handleItemClick = (item: FileOrFolder) => {
-        const newPath = currentPath === '.' ? item.name : [currentPath, item.name].join('/');
+        const newPath = currentPath === '.' ? item.name : `${currentPath}/${item.name}`;
         
         if (item.type === 'directory') {
             setCurrentPath(newPath);
