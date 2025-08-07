@@ -1,7 +1,7 @@
 
 "use client"
 
-import { type ReactNode, Suspense } from "react"
+import { type ReactNode, Suspense, useState, useEffect } from "react"
 import Link from "next/link"
 import { Settings, Globe, Bot, Users, LayoutDashboard, LogOut, Coins } from "lucide-react"
 import { BotIcon } from "@/components/icons"
@@ -15,13 +15,28 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import Preloader from "@/components/preloader"
 
 // A helper component to conditionally render layout
 function ConditionalLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        setIsInitializing(false);
+    }, 3000); // Show preloader for 3 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
 
   // Check if the current path is for a specific bot detail page, file manager, editor, or settings
   const isSpecialPage = /^\/dashboard\/bots\/[^/]+(\/(files(\/editor)?|settings))?$/.test(pathname || '');
+
+  if (isInitializing) {
+    return <Preloader />;
+  }
 
   if (isSpecialPage) {
     return (
@@ -35,7 +50,7 @@ function ConditionalLayout({ children }: { children: ReactNode }) {
 
   return (
     <div 
-      className="flex min-h-screen w-full flex-col bg-cover bg-center bg-no-repeat"
+      className="flex min-h-screen w-full flex-col bg-cover bg-center bg-no-repeat animate-in fade-in duration-1000"
       style={{ backgroundImage: "url('/city-bg.jpg')" }}
     >
       <div className="flex min-h-screen w-full flex-col bg-black/60 backdrop-blur-sm">
