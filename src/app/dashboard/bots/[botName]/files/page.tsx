@@ -45,8 +45,7 @@ export default function FileManagerPage() {
         if (item.type === 'directory') {
             setCurrentPath(item.path);
         } else {
-            // Handle file click, e.g., open in editor
-            toast({ title: "File Clicked", description: `You clicked on ${item.name}` });
+            router.push(`/dashboard/bots/${botName}/files/editor?filePath=${encodeURIComponent(item.path)}`);
         }
     };
     

@@ -1,7 +1,7 @@
 
 "use client"
 
-import { type ReactNode } from "react"
+import { type ReactNode, Suspense } from "react"
 import Link from "next/link"
 import { Settings, Globe } from "lucide-react"
 import { BotIcon } from "@/components/icons"
@@ -16,10 +16,16 @@ function ConditionalLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   // Check if the current path is for a specific bot detail page or file manager
-  const isSpecialPage = /^\/dashboard\/bots\/[^/]+(\/files)?$/.test(pathname || '');
+  const isSpecialPage = /^\/dashboard\/bots\/[^/]+(\/(files|files\/editor))?$/.test(pathname || '');
 
   if (isSpecialPage) {
-    return <main className="flex-1 h-screen overflow-hidden bg-black">{children}</main>;
+    return (
+        <main className="flex-1 h-screen overflow-hidden bg-black">
+             <Suspense fallback={<div className="h-full w-full flex items-center justify-center bg-black text-white">Loading Page...</div>}>
+                {children}
+            </Suspense>
+        </main>
+    );
   }
 
   return (
