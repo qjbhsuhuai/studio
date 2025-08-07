@@ -99,10 +99,8 @@ export default function BotsPage() {
     const { data, error, mutate } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, fetcher, { refreshInterval: 3000 });
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [selectedBot, setSelectedBot] = useState<string | null>(null);
-    const [moduleName, setModuleName] = useState('');
     const [newBotName, setNewBotName] = useState('');
     const [gitUrl, setGitUrl] = useState('');
     const [zipFile, setZipFile] = useState<File | null>(null);
@@ -186,32 +184,6 @@ export default function BotsPage() {
         }
     }
     
-    const openInstallDialog = (botName: string) => {
-        setSelectedBot(botName);
-        setIsInstallDialogOpen(true);
-    };
-
-    const confirmInstall = async () => {
-        if (!selectedBot || !moduleName || !userId) return;
-        setIsLoading(prev => ({ ...prev, [selectedBot]: true }));
-        try {
-             const res = await fetch(`/api/install`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ botName: selectedBot, module: moduleName, userId: userId }),
-            });
-             const data = await res.json();
-             if (!res.ok) throw new Error(data.message);
-             toast({ title: "ส่งคำสั่งแล้ว", description: data.message });
-        } catch (err: any) {
-             toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: 'destructive' });
-        } finally {
-            setIsLoading(prev => ({ ...prev, [selectedBot]: false }));
-            setIsInstallDialogOpen(false);
-            setModuleName('');
-        }
-    };
-
     const handleCreateProject = async (creationMethod: 'empty' | 'git' | 'zip') => {
         if (!userId) {
             toast({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถระบุผู้ใช้ได้ กรุณาล็อกอินใหม่อีกครั้ง', variant: 'destructive' });
@@ -553,10 +525,6 @@ export default function BotsPage() {
                                         <span className="ml-1">Settings</span>
                                     </Link>
                                 </Button>
-                                <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => openInstallDialog(bot.name)}>
-                                    <Package className="h-4 w-4" />
-                                    <span className="ml-1">Install</span>
-                                </Button>
                                 <Button size="sm" variant="ghost" className="text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -581,37 +549,10 @@ export default function BotsPage() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={isInstallDialogOpen} onOpenChange={setIsInstallDialogOpen}>
-                <DialogContent className="bg-card border-border">
-                    <DialogHeader>
-                        <DialogTitle>Install Dependencies for '{selectedBot}'</DialogTitle>
-                        <DialogDescription>
-                            Enter the name of the module to install (e.g., express, discord.js).
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                       <div className="grid grid-cols-4 items-center gap-4">
-                         <Label htmlFor="module-name" className="text-right">
-                           Module
-                         </Label>
-                         <Input
-                           id="module-name"
-                           value={moduleName}
-                           onChange={(e) => setModuleName(e.target.value)}
-                           className="col-span-3"
-                           placeholder="e.g., discord.js"
-                         />
-                       </div>
-                    </div>
-                    <DialogFooter>
-                         <Button variant="outline" onClick={() => { setIsInstallDialogOpen(false); setModuleName(''); }}>Cancel</Button>
-                         <Button onClick={confirmInstall}>Install</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
         </div>
     );
 }
+
+    
 
     

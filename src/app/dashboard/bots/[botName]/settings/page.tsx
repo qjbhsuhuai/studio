@@ -255,12 +255,12 @@ export default function ProjectSettingsPage() {
 
     if (isLoading || !settings) {
         return (
-            <div className="flex flex-col h-full text-white bg-black p-6 space-y-8">
-                 <header className="flex items-center p-4 border-b border-gray-800 -mx-6 -mt-6">
+            <div className="flex flex-col h-full text-white bg-black p-4 md:p-6 space-y-8">
+                 <header className="flex items-center p-4 border-b border-gray-800 -mx-4 -mt-4 md:-mx-6 md:-mt-6">
                     <Skeleton className="h-10 w-10 mr-4" />
-                    <Skeleton className="h-6 w-64" />
+                    <Skeleton className="h-6 w-48" />
                     <div className="ml-auto">
-                        <Skeleton className="h-10 w-36" />
+                        <Skeleton className="h-10 w-24" />
                     </div>
                 </header>
                 <Card className="bg-card/50 border-border">
@@ -291,15 +291,17 @@ export default function ProjectSettingsPage() {
                 <Button variant="ghost" size="icon" className="mr-4" onClick={handleGoBack}>
                     <ArrowLeft />
                 </Button>
-                <h1 className="text-xl font-semibold">ตั้งค่าโปรเจกต์: {botName}</h1>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-semibold truncate">ตั้งค่า: {botName}</h1>
+                </div>
                 <div className="ml-auto">
-                    <Button onClick={handleSaveChanges} disabled={isSaving}>
-                        {isSaving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+                    <Button onClick={handleSaveChanges} disabled={isSaving} size="sm">
+                        {isSaving ? 'กำลังบันทึก...' : 'บันทึก'}
                     </Button>
                 </div>
             </header>
 
-            <main className="flex-1 p-6 overflow-auto space-y-8">
+            <main className="flex-1 p-4 md:p-6 overflow-auto space-y-8">
                 {/* General Settings */}
                 <Card className="bg-card/50 border-border">
                     <CardHeader>
@@ -322,7 +324,7 @@ export default function ProjectSettingsPage() {
                 {/* Sharing Settings */}
                 <Card className="bg-card/50 border-border">
                     <CardHeader>
-                        <CardTitle>การแชร์และสิทธิ์การเข้าถึง</CardTitle>
+                        <CardTitle>การแชร์และสิทธิ์</CardTitle>
                         <CardDescription>
                             จัดการการทำงานร่วมกับผู้อื่นในโปรเจกต์นี้
                         </CardDescription>
@@ -348,7 +350,7 @@ export default function ProjectSettingsPage() {
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        ส่ง UID นี้ให้เพื่อนเพื่อเชิญเข้ามาทำงานร่วมกันในโปรเจกต์
+                                        ส่ง UID นี้ให้เพื่อนเพื่อเชิญเข้ามาทำงานร่วมกัน
                                     </p>
                                 </div>
                                 <div className="space-y-4">
@@ -384,15 +386,15 @@ export default function ProjectSettingsPage() {
                     <Card className="bg-card/50 border-border">
                         <CardHeader>
                             <CardTitle>คำขอเข้าร่วม</CardTitle>
-                            <CardDescription>จัดการคำขอจากผู้ใช้ที่ต้องการเข้าร่วมโปรเจกต์ของคุณ</CardDescription>
+                            <CardDescription>จัดการคำขอจากผู้ใช้ที่ต้องการเข้าร่วมโปรเจกต์</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {requests.length > 0 ? (
                                 <ul className="space-y-3">
                                     {requests.map(req => (
-                                        <li key={req.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
-                                            <div>
-                                                <p className="font-medium">{req.userEmail}</p>
+                                        <li key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md bg-muted/50 gap-4">
+                                            <div className="min-w-0">
+                                                <p className="font-medium truncate">{req.userEmail}</p>
                                                 <Badge variant={
                                                     req.status === 'approved' ? 'default' :
                                                     req.status === 'rejected' ? 'destructive' : 'secondary'
@@ -401,7 +403,7 @@ export default function ProjectSettingsPage() {
                                                 </Badge>
                                             </div>
                                             {req.status === 'pending' && (
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 self-start sm:self-center flex-shrink-0">
                                                     <Button size="sm" variant="outline" className="text-green-400 border-green-400 hover:bg-green-400/10 hover:text-green-300" onClick={() => handleRequestAction(req.id, 'approved')}>
                                                         <CheckCircle className="mr-2 h-4 w-4" />
                                                         อนุมัติ

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { Folder, FileText, MoreVertical, Trash2, Edit, Plus, Upload, ArrowLeft, FilePlus, FolderPlus } from 'lucide-react';
+import { Folder, FileText, MoreVertical, Trash2, Edit, Upload, ArrowLeft, FilePlus, FolderPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -30,7 +30,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -87,7 +86,7 @@ export default function FileManagerPage() {
     
     const handleGoBack = () => {
         if (currentPath === '.') {
-            router.push('/dashboard/bots');
+            router.push(`/dashboard/bots/${botName}`);
         } else {
             const newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '.';
             setCurrentPath(newPath);
@@ -133,7 +132,6 @@ export default function FileManagerPage() {
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
             toast({ title: 'สำเร็จ', description: result.message });
-            mutate();
         } catch (err: any) {
             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
@@ -224,63 +222,67 @@ export default function FileManagerPage() {
                 <Button variant="ghost" size="icon" className="mr-4" onClick={handleGoBack}>
                     <ArrowLeft />
                 </Button>
-                <h1 className="text-xl font-semibold">ไฟล์ใน: {botName}/{currentPath === '.' ? '' : currentPath}</h1>
+                <div className="min-w-0 flex-1">
+                    <h1 className="text-xl font-semibold truncate">ไฟล์ใน: {botName}/{currentPath === '.' ? '' : currentPath}</h1>
+                </div>
             </header>
             
-            <main className="flex-1 p-4 overflow-auto">
+            <main className="flex-1 p-2 md:p-4 overflow-auto">
                  <Card className="bg-card/80 backdrop-blur-lg border-border">
                     <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHead className="text-white">Name</TableHead>
-                                    <TableHead className="text-right text-white"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {error && (
-                                    <TableRow>
-                                        <TableCell colSpan={2} className="text-center text-destructive">
-                                            Could not load files.
-                                        </TableCell>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead className="text-white">Name</TableHead>
+                                        <TableHead className="text-right text-white"></TableHead>
                                     </TableRow>
-                                )}
-                                {!data && !error && (
-                                    <TableRow>
-                                        <TableCell colSpan={2} className="text-center">
-                                            Loading...
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                                {sortedFiles?.map((item: FileOrFolder) => (
-                                    <TableRow key={item.name} className="cursor-pointer hover:bg-muted/20" onClick={() => handleItemClick(item)}>
-                                        <TableCell className="flex items-center gap-3">
-                                            {item.type === 'directory' ? <Folder className="h-5 w-5 text-primary" /> : <FileText className="h-5 w-5 text-gray-400" />}
-                                            <span>{item.name}</span>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                                    <DropdownMenuItem onClick={() => openRenameDialog(item)}>
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        <span>Rename</span>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item)}>
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        <span>Delete</span>
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {error && (
+                                        <TableRow>
+                                            <TableCell colSpan={2} className="text-center text-destructive">
+                                                Could not load files.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                    {!data && !error && (
+                                        <TableRow>
+                                            <TableCell colSpan={2} className="text-center">
+                                                Loading...
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                    {sortedFiles?.map((item: FileOrFolder) => (
+                                        <TableRow key={item.name} className="cursor-pointer hover:bg-muted/20" onClick={() => handleItemClick(item)}>
+                                            <TableCell className="flex items-center gap-3">
+                                                {item.type === 'directory' ? <Folder className="h-5 w-5 text-primary flex-shrink-0" /> : <FileText className="h-5 w-5 text-gray-400 flex-shrink-0" />}
+                                                <span className="truncate">{item.name}</span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                        <DropdownMenuItem onClick={() => openRenameDialog(item)}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            <span>Rename</span>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item)}>
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            <span>Delete</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </main>
@@ -362,18 +364,18 @@ export default function FileManagerPage() {
             <footer className="p-4 border-t border-gray-800 grid grid-cols-3 gap-2">
                  <Button variant="outline" className="bg-transparent hover:bg-primary/10" onClick={() => setIsCreateFileDialogOpen(true)}>
                     <FilePlus className="mr-2 h-4 w-4" />
-                    สร้างไฟล์
+                    <span className="hidden sm:inline">สร้างไฟล์</span>
                 </Button>
                  <Button variant="outline" className="bg-transparent hover:bg-primary/10" onClick={() => setIsCreateFolderDialogOpen(true)}>
                     <FolderPlus className="mr-2 h-4 w-4" />
-                    สร้างโฟลเดอร์
+                     <span className="hidden sm:inline">สร้างโฟลเดอร์</span>
                 </Button>
                  <Button variant="outline" className="bg-transparent hover:bg-primary/10" onClick={() => setIsUploadDialogOpen(true)}>
                     <Upload className="mr-2 h-4 w-4" />
-                    อัปโหลด
+                     <span className="hidden sm:inline">อัปโหลด</span>
                 </Button>
             </footer>
         </div>
     );
-
+}
     

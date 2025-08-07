@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function ProfilePage() {
   return (
-    <div className="flex justify-center items-start py-12">
+    <div className="flex justify-center items-start py-6 md:py-12">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle>แก้ไขโปรไฟล์</CardTitle>
@@ -25,12 +25,12 @@ export default function ProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Avatar className="h-20 w-20">
               <AvatarImage src="" data-ai-hint="person avatar" />
               <AvatarFallback>A</AvatarFallback>
             </Avatar>
-            <div className="space-y-1">
+            <div className="space-y-1 text-center sm:text-left">
                 <Button variant="outline">เปลี่ยนรูปภาพ</Button>
                 <p className="text-xs text-muted-foreground">JPG, GIF หรือ PNG. ขนาดสูงสุด 1MB</p>
             </div>
@@ -59,3 +59,5 @@ export default function ProfilePage() {
     </div>
   )
 }
+
+    

@@ -163,11 +163,11 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">จัดการเซิร์ฟเวอร์</h1>
-          <p className="text-muted-foreground">
-            เพิ่ม แก้ไข หรือลบ API เซิร์ฟเวอร์ของคุณ (ข้อมูลบันทึกใน Firebase)
+          <p className="text-muted-foreground text-sm sm:text-base">
+            เพิ่ม แก้ไข หรือลบ API เซิร์ฟเวอร์ของคุณ
           </p>
         </div>
         <Button onClick={openAddDialog}>
@@ -194,18 +194,18 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-4">
               {apiList.map((api) => (
-                <Card key={api.id} className={`p-4 flex justify-between items-center ${activeApiUrl === api.url ? 'border-primary' : ''}`}>
+                <Card key={api.id} className={`p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${activeApiUrl === api.url ? 'border-primary' : ''}`}>
                   <div className="flex items-center gap-4">
-                     {activeApiUrl === api.url && <CheckCircle className="h-5 w-5 text-green-500" />}
-                    <div>
-                        <p className="font-semibold">{api.name}</p>
-                        <p className="text-sm text-muted-foreground">{api.url}</p>
+                     {activeApiUrl === api.url && <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />}
+                    <div className="min-w-0">
+                        <p className="font-semibold truncate">{api.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{api.url}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
                      {activeApiUrl !== api.url && (
                         <Button variant="outline" size="sm" onClick={() => handleSetActive(api.url)}>
-                            เลือกใช้งาน
+                            ใช้งาน
                         </Button>
                      )}
                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(api)}>
@@ -231,27 +231,25 @@ export default function SettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+            <div className="space-y-2">
+              <Label htmlFor="name">
                 ชื่อ
               </Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="col-span-3"
                 placeholder="เช่น เซิร์ฟเวอร์หลัก"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="url" className="text-right">
+            <div className="space-y-2">
+              <Label htmlFor="url">
                 URL
               </Label>
               <Input
                 id="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="col-span-3"
                 placeholder="https://your-api-url.com"
               />
             </div>
@@ -265,3 +263,5 @@ export default function SettingsPage() {
     </div>
   )
 }
+
+    

@@ -176,93 +176,95 @@ export default function UsersPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">การจัดการผู้ใช้</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             จัดการผู้ใช้ทั้งหมดในระบบของคุณ
           </p>
         </div>
       </div>
       <Card>
         <CardContent className="mt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ผู้ใช้</TableHead>
-                <TableHead>บทบาท</TableHead>
-                <TableHead>สถานะ</TableHead>
-                <TableHead>เครดิต</TableHead>
-                <TableHead className="text-right">การกระทำ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    กำลังโหลด...
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && users.length === 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    ไม่มีผู้ใช้
-                  </TableCell>
+                  <TableHead className="w-[40%] sm:w-auto">ผู้ใช้</TableHead>
+                  <TableHead className="hidden sm:table-cell">บทบาท</TableHead>
+                  <TableHead className="hidden sm:table-cell">สถานะ</TableHead>
+                  <TableHead className="hidden md:table-cell">เครดิต</TableHead>
+                  <TableHead className="text-right">การกระทำ</TableHead>
                 </TableRow>
-              )}
-              {!isLoading && users.map((user) => (
-                <TableRow key={user.email}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar" />
-                        <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="font-medium">
-                        <div>{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+              </TableHeader>
+              <TableBody>
+                {isLoading && (
+                   <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      กำลังโหลด...
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && users.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      ไม่มีผู้ใช้
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && users.map((user) => (
+                  <TableRow key={user.email}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person avatar" />
+                          <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="font-medium min-w-0">
+                          <div className="truncate">{user.name}</div>
+                          <div className="text-sm text-muted-foreground truncate">{user.email}</div>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === "Admin" ? "destructive" : "outline"}>
-                      {user.role}
-                    </Badge>
-                  </TableCell>
-                   <TableCell>
-                     <Badge variant={user.status === "Active" ? "secondary" : "destructive"}>
-                        {user.status}
-                     </Badge>
-                   </TableCell>
-                   <TableCell>
-                      {user.credits ?? 0}
-                   </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={user.role === 'Admin'}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleManageCreditsClick(user)}>
-                          จัดการเครดิต
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleBanToggle(user)}>
-                            <Ban className="mr-2 h-4 w-4" />
-                            <span>{user.status === "Active" ? "แบนผู้ใช้" : "ยกเลิกการแบน"}</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(user)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>ลบผู้ใช้</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={user.role === "Admin" ? "destructive" : "outline"}>
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                     <TableCell className="hidden sm:table-cell">
+                       <Badge variant={user.status === "Active" ? "secondary" : "destructive"}>
+                          {user.status}
+                       </Badge>
+                     </TableCell>
+                     <TableCell className="hidden md:table-cell">
+                        {user.credits ?? 0}
+                     </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={user.role === 'Admin'}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>การกระทำ</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleManageCreditsClick(user)}>
+                            จัดการเครดิต
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleBanToggle(user)}>
+                              <Ban className="mr-2 h-4 w-4" />
+                              <span>{user.status === "Active" ? "แบนผู้ใช้" : "ยกเลิกการแบน"}</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(user)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>ลบผู้ใช้</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       {selectedUser && (
@@ -320,3 +322,5 @@ export default function UsersPage() {
     </>
   )
 }
+
+    

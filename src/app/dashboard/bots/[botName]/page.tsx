@@ -2,7 +2,7 @@
 "use client"
 import { useEffect, useState, useRef } from 'react';
 import useSWR from 'swr';
-import { Play, StopCircle, HardDrive, Cpu, Gauge, Send, ArrowLeft, Settings } from 'lucide-react';
+import { Play, StopCircle, Package, Settings, Send, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,16 @@ import { Input } from "@/components/ui/input"
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -67,7 +77,7 @@ const AnsiLogRenderer = ({ logString }: { logString: string }) => {
     };
 
     return (
-        <pre className="p-4 text-sm font-mono whitespace-pre-wrap break-words">
+        <pre className="p-2 md:p-4 text-sm font-mono whitespace-pre-wrap break-words">
             <code>{logString.split('\n').map(renderLine)}</code>
         </pre>
     );
@@ -83,6 +93,11 @@ function BotDetailClient({ botName }: { botName: string }) {
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const router = useRouter();
+
+    // Install Dialog State
+    const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
+    const [moduleName, setModuleName] = useState('');
+    const [isInstalling, setIsInstalling] = useState(false);
 
     const { data: statusData, mutate: mutateStatus } = useSWR(userId ? `/api/scripts?userId=${userId}` : null, (url) => fetcher(url).then(data => {
         return data.scripts.find((s: any) => s.name === botName);
@@ -183,6 +198,28 @@ function BotDetailClient({ botName }: { botName: string }) {
         }
     };
     
+    const confirmInstall = async () => {
+        if (!botName || !moduleName || !userId) return;
+        setIsInstalling(true);
+        try {
+             const res = await fetch(`/api/install`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ botName, module: moduleName, userId }),
+            });
+             const data = await res.json();
+             if (!res.ok) throw new Error(data.message);
+             toast({ title: "ส่งคำสั่งแล้ว", description: data.message });
+             setLogs(prev => prev + `\n[System] กำลังติดตั้ง ${moduleName}...\n`);
+        } catch (err: any) {
+             toast({ title: "เกิดข้อผิดพลาด", description: err.message, variant: 'destructive' });
+        } finally {
+            setIsInstalling(false);
+            setIsInstallDialogOpen(false);
+            setModuleName('');
+        }
+    };
+    
     if (!isMounted) {
         return <div className="flex flex-col h-full bg-black text-white" />;
     }
@@ -191,37 +228,47 @@ function BotDetailClient({ botName }: { botName: string }) {
 
     return (
         <div className="flex flex-col h-full bg-black text-white">
-             <header className="flex items-center p-4 border-b border-gray-800">
+             <header className="flex items-center p-2 md:p-4 border-b border-gray-800">
                 <Link href="/dashboard/bots" passHref>
-                    <Button variant="ghost" size="icon" className="mr-4">
+                    <Button variant="ghost" size="icon" className="mr-2 md:mr-4">
                         <ArrowLeft />
                     </Button>
                 </Link>
-                <h1 className="text-xl font-semibold">เทอร์มินัล: {botName}</h1>
-                <div className="ml-auto flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-lg md:text-xl font-semibold truncate">เทอร์มินัล: {botName}</h1>
+                </div>
+                <div className="ml-auto flex items-center gap-2 md:gap-4">
                     {statusData && (
                         <>
-                            <p className={cn("text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
+                            <p className={cn("hidden sm:block text-sm", isRunning ? 'text-green-400' : 'text-red-500')}>
                                 {statusData?.status || 'Offline'}
                             </p>
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-9 w-9"
+                                className="h-8 w-8 md:h-9 md:w-9"
+                                onClick={() => setIsInstallDialogOpen(true)}
+                            >
+                                <Package className="h-4 w-4 md:h-5 md:w-5" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 md:h-9 md:w-9"
                                 onClick={() => router.push(`/dashboard/bots/${botName}/settings`)}
                             >
-                                <Settings className="h-5 w-5" />
+                                <Settings className="h-4 w-4 md:h-5 md:w-5" />
                             </Button>
                             <Button 
                                 size="icon" 
                                 variant="ghost" 
                                 className={cn(
-                                    "h-9 w-9 rounded-full",
+                                    "h-8 w-8 md:h-9 md:w-9 rounded-full",
                                     isRunning ? "bg-red-500/80 hover:bg-red-600/80 text-white" : "bg-green-500/80 hover:bg-green-600/80 text-white"
                                 )}
                                 onClick={() => handleAction(isRunning ? 'stop' : 'run')}
                             >
-                                {isRunning ? <StopCircle className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                                {isRunning ? <StopCircle className="h-4 w-4 md:h-5 md:w-5" /> : <Play className="h-4 w-4 md:h-5 md:w-5" />}
                             </Button>
                         </>
                     )}
@@ -249,6 +296,38 @@ function BotDetailClient({ botName }: { botName: string }) {
                     </Button>
                 </div>
             </footer>
+             
+             {/* Install Dialog */}
+            <Dialog open={isInstallDialogOpen} onOpenChange={setIsInstallDialogOpen}>
+                <DialogContent className="bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle>ติดตั้ง Dependencies</DialogTitle>
+                        <DialogDescription>
+                            กรอกชื่อโมดูลที่ต้องการติดตั้ง (เช่น express, discord.js) คำสั่งจะถูกส่งไปยังเทอร์มินัล
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                       <div className="grid grid-cols-4 items-center gap-4">
+                         <Label htmlFor="module-name" className="text-right">
+                           ชื่อโมดูล
+                         </Label>
+                         <Input
+                           id="module-name"
+                           value={moduleName}
+                           onChange={(e) => setModuleName(e.target.value)}
+                           className="col-span-3"
+                           placeholder="e.g., discord.js"
+                         />
+                       </div>
+                    </div>
+                    <DialogFooter>
+                         <Button variant="outline" onClick={() => { setIsInstallDialogOpen(false); setModuleName(''); }}>ยกเลิก</Button>
+                         <Button onClick={confirmInstall} disabled={isInstalling || !moduleName}>
+                            {isInstalling ? 'กำลังติดตั้ง...' : 'ติดตั้ง'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
@@ -257,3 +336,5 @@ export default function BotDetailPage({ params }: { params: { botName: string } 
     const { botName } = params;
     return <BotDetailClient botName={botName} />;
 }
+
+    
