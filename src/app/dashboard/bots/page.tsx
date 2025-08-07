@@ -122,14 +122,20 @@ type BotProject = {
 
 
 const creationLogs = [
+    "Booting up virtual environment...",
     "Initializing project...",
     "Validating project name...",
-    "Allocating resources...",
-    "Setting up file structure...",
+    "Connecting to repository...",
     "Cloning repository...",
-    "Installing dependencies...",
-    "Configuring environment...",
+    "Checking dependencies...",
+    "Installing node modules (npm install)...",
+    "Configuring environment variables...",
+    "Setting up file structure...",
+    "Allocating compute resources...",
+    "Securing network protocols...",
     "Finalizing setup...",
+    "Project deployment initiated...",
+    "Waiting for server response...",
     "Project created successfully!"
 ];
 
@@ -137,7 +143,7 @@ const CreationProgress = ({ logs }: { logs: string[] }) => {
     return (
         <div className="flex flex-col items-center justify-center p-8 space-y-6 bg-black rounded-lg min-h-[300px]">
             <Loader2 className="h-12 w-12 text-primary animate-spin" />
-            <div className="w-full h-40 font-mono text-sm text-left overflow-hidden">
+            <div className="w-full h-40 font-mono text-sm text-left overflow-y-auto">
                 {logs.map((log, index) => (
                     <p key={index} className="text-green-400 whitespace-pre-wrap animate-in fade-in">
                         <span className="text-muted-foreground mr-2">$</span>{log}
@@ -271,7 +277,8 @@ export default function BotsPage() {
             const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
             if (!res.ok) {
                  const data = await res.json().catch(() => ({ message: 'Failed to delete project files.' }));
-                 throw new Error(data.message);
+                 // Don't throw error here, just log it, so we can still delete from DB
+                 console.error(data.message);
             }
             
             // 2. Delete the project data from Firebase
@@ -314,7 +321,7 @@ export default function BotsPage() {
             if (logIndex >= creationLogs.length) {
                 clearInterval(logInterval);
             }
-        }, 300);
+        }, 8000); // Slower interval for a longer animation
 
 
         try {
@@ -455,7 +462,10 @@ export default function BotsPage() {
 
     return (
         <div className="space-y-4">
-             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+             <Dialog open={isCreateDialogOpen} onOpenChange={(isOpen) => {
+                 if (isCreating) return; // Prevent closing while creating
+                 setIsCreateDialogOpen(isOpen);
+             }}>
                 <DialogTrigger asChild>
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-14 w-14 fixed bottom-8 right-8 z-20 shadow-lg">
                         <PlusCircle className="h-8 w-8" />
