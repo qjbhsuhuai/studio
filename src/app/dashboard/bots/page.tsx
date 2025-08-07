@@ -255,12 +255,12 @@ export default function BotsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>CPU</TableHead>
-                                <TableHead>Memory</TableHead>
-                                <TableHead className="text-right"></TableHead>
+                                <TableHead className="py-2 px-2 md:px-4">Status</TableHead>
+                                <TableHead className="py-2 px-2 md:px-4">Name</TableHead>
+                                <TableHead className="hidden md:table-cell py-2 px-4">Type</TableHead>
+                                <TableHead className="hidden md:table-cell py-2 px-4">CPU</TableHead>
+                                <TableHead className="hidden md:table-cell py-2 px-4">Memory</TableHead>
+                                <TableHead className="text-right py-2 px-2 md:px-4"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -280,7 +280,7 @@ export default function BotsPage() {
                             )}
                             {data?.scripts.map((bot: any) => (
                                 <TableRow key={bot.name}>
-                                    <TableCell>
+                                    <TableCell className="py-2 px-2 md:px-4">
                                         <Badge
                                             variant={bot.status === 'running' ? 'default' : 'secondary'}
                                             className={bot.status === 'running' ? 'bg-green-500/80 hover:bg-green-600/80 border-green-400' : 'bg-muted/80'}
@@ -290,35 +290,35 @@ export default function BotsPage() {
                                             ) : (
                                                 <XCircle className="mr-1 h-3 w-3" />
                                             )}
-                                            {bot.status === 'running' ? 'Online' : 'Offline'}
+                                            <span className="hidden sm:inline">{bot.status === 'running' ? 'Online' : 'Offline'}</span>
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="font-medium">{bot.name}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="font-medium py-2 px-2 md:px-4 truncate max-w-24 md:max-w-xs">{bot.name}</TableCell>
+                                    <TableCell className="hidden md:table-cell py-2 px-4">
                                         <Badge variant="outline">{bot.type}</Badge>
                                     </TableCell>
-                                    <TableCell>{bot.cpu || 'N/A'}</TableCell>
-                                    <TableCell>{bot.memory ? `${bot.memory} MB` : 'N/A'}</TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                        <Button 
+                                    <TableCell className="hidden md:table-cell py-2 px-4">{bot.cpu || 'N/A'}</TableCell>
+                                    <TableCell className="hidden md:table-cell py-2 px-4">{bot.memory ? `${bot.memory} MB` : 'N/A'}</TableCell>
+                                    <TableCell className="text-right space-x-1 md:space-x-2 py-2 px-2 md:px-4">
+                                        <Button
                                             size="sm"
                                             variant={bot.status === 'running' ? 'destructive' : 'default'}
                                             onClick={() => handleAction(bot.status === 'running' ? 'stop' : 'run', bot.name)}
                                             disabled={isLoading[bot.name]}
                                             className={bot.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
                                         >
-                                            {bot.status === 'running' ? <StopCircle className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}
-                                            {bot.status === 'running' ? 'Stop' : 'Start'}
+                                            {bot.status === 'running' ? <StopCircle className="h-4 w-4 md:mr-1" /> : <Play className="h-4 w-4 md:mr-1" />}
+                                            <span className="hidden md:inline">{bot.status === 'running' ? 'Stop' : 'Start'}</span>
                                         </Button>
                                         <Button size="sm" variant="outline" asChild>
                                             <Link href={`/dashboard/bots/${bot.name}`}>
-                                                <Terminal className="mr-1 h-4 w-4" />
-                                                Manage
+                                                <Terminal className="h-4 w-4 md:mr-1" />
+                                                <span className="hidden md:inline">Manage</span>
                                             </Link>
                                         </Button>
                                         <Button size="sm" variant="outline" onClick={() => openInstallDialog(bot.name)}>
-                                            <Package className="mr-1 h-4 w-4" />
-                                            Install
+                                            <Package className="h-4 w-4 md:mr-1" />
+                                            <span className="hidden md:inline">Install</span>
                                         </Button>
                                         <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => openDeleteDialog(bot.name)}>
                                             <Trash2 className="h-4 w-4" />
