@@ -222,11 +222,13 @@ export default function BotsPage() {
             const res = await fetch(`/api/scripts/${selectedBot}?userId=${userId}`, { method: 'DELETE' });
              const data = await res.json();
              if (!res.ok) throw new Error(data.message);
+            
+             setProjects(prev => prev.filter(p => p.name !== selectedBot));
+
             toast({ title: 'สำเร็จ', description: `ลบโปรเจกต์ ${selectedBot} สำเร็จ` });
         } catch (err:any) {
              toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
-            mutateApi();
             setIsLoading(prev => ({ ...prev, [selectedBot]: false }));
             setIsDeleteDialogOpen(false);
             setSelectedBot(null);
@@ -260,8 +262,6 @@ export default function BotsPage() {
             if (currentCredits < totalCost) {
                  throw new Error(`เครดิตไม่เพียงพอ คุณมี ${currentCredits} แต่ต้องการ ${totalCost} เครดิต`);
             }
-
-            const newCredits = currentCredits - totalCost;
             
             const formData = new FormData();
             formData.append('botName', newBotName);
@@ -283,9 +283,17 @@ export default function BotsPage() {
             if (!res.ok) {
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
+            
+            // --- Start of Changes ---
+            
+            // 1. Calculate new credits and expiry time on the client
+            const newCredits = currentCredits - totalCost;
+            const expiryTimestamp = new Date().getTime() + (creationDays * 24 * 60 * 60 * 1000);
 
+            // 2. Update user credits in Firebase
             await update(userRef, { credits: newCredits });
 
+            // 3. Create project settings in Firebase
             const settingsRef = ref(db, `bots/${userId}/${newBotName}/settings`);
             const newUid = `uid-${newBotName}-${Date.now()}`;
             await set(settingsRef, {
@@ -296,6 +304,21 @@ export default function BotsPage() {
                 permissions: { canRun: true, canEdit: false, canManageFiles: false, canInstall: false },
             });
 
+            // 4. Update local state immediately for instant UI feedback
+            const newProject: BotProject = {
+                name: newBotName,
+                status: 'stopped',
+                cpu: 'N/A',
+                memory: 'N/A',
+                expiresAt: expiryTimestamp, // Use client-calculated expiry
+                isOwner: true
+            };
+            setProjects(prevProjects => [...prevProjects, newProject]);
+            
+            // 5. Refresh API data in the background
+            mutateApi();
+
+            // --- End of Changes ---
 
             toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
             setIsCreateDialogOpen(false);
@@ -303,7 +326,7 @@ export default function BotsPage() {
             setGitUrl('');
             setZipFile(null);
             setCreationDays(1);
-            mutateApi();
+            
         } catch (err: any) {
             setCreateError(err.message);
         } finally {
@@ -612,4 +635,5 @@ export default function BotsPage() {
 
         </div>
     );
-}
+
+    
