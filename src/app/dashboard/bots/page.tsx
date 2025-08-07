@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { CpuIcon, MemoryStickIcon } from '@/components/icons';
-import { get, ref, onValue, off, push, query, orderByChild, equalTo, find, set } from 'firebase/database';
+import { get, ref, onValue, off, push, query, orderByChild, equalTo, find, set, update } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
@@ -245,31 +245,50 @@ export default function BotsPage() {
             toast({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถระบุผู้ใช้ได้ กรุณาล็อกอินใหม่อีกครั้ง', variant: 'destructive' });
             return;
         }
-         if (!hasEnoughCredits) {
-            toast({ title: 'เครดิตไม่เพียงพอ', description: 'คุณมีเครดิตไม่พอสำหรับสร้างโปรเจกต์ตามจำนวนวันที่เลือก', variant: 'destructive' });
-            return;
-        }
+
         setIsLoading(prev => ({ ...prev, create: true }));
         setCreateError(null);
-        const formData = new FormData();
-        formData.append('botName', newBotName);
-        formData.append('creationMethod', creationMethod);
-        formData.append('userId', userId);
-        formData.append('days', creationDays.toString()); // Send days to backend
-
-        if (creationMethod === 'git') {
-            formData.append('gitUrl', gitUrl);
-        } else if (creationMethod === 'zip' && zipFile) {
-            formData.append('file', zipFile);
-        }
 
         try {
+            // --- Credit Deduction Logic ---
+            const userRef = ref(db, `users/${userId}`);
+            const snapshot = await get(userRef);
+
+            if (!snapshot.exists()) {
+                throw new Error("ไม่พบข้อมูลผู้ใช้ในระบบ");
+            }
+            const userData = snapshot.val();
+            const currentCredits = userData.credits || 0;
+
+            if (currentCredits < totalCost) {
+                 throw new Error(`เครดิตไม่เพียงพอ คุณมี ${currentCredits} แต่ต้องการ ${totalCost} เครดิต`);
+            }
+
+            const newCredits = currentCredits - totalCost;
+            await update(userRef, { credits: newCredits });
+            // --- End Credit Deduction Logic ---
+
+
+            const formData = new FormData();
+            formData.append('botName', newBotName);
+            formData.append('creationMethod', creationMethod);
+            formData.append('userId', userId);
+            formData.append('days', creationDays.toString()); // Send days to backend
+
+            if (creationMethod === 'git') {
+                formData.append('gitUrl', gitUrl);
+            } else if (creationMethod === 'zip' && zipFile) {
+                formData.append('file', zipFile);
+            }
+
             const res = await fetch('/api/upload/project', {
                 method: 'POST',
                 body: formData,
             });
             const result = await res.json();
             if (!res.ok) {
+                // Rollback credit deduction on failure
+                await update(userRef, { credits: currentCredits });
                 throw new Error(result.message || 'เกิดข้อผิดพลาดในการสร้างโปรเจกต์');
             }
 
@@ -285,7 +304,7 @@ export default function BotsPage() {
             });
 
 
-            toast({ title: "สำเร็จ", description: result.message });
+            toast({ title: "สำเร็จ", description: `${result.message} และหักเครดิตไป ${totalCost} หน่วย` });
             setIsCreateDialogOpen(false);
             setNewBotName('');
             setGitUrl('');
@@ -605,3 +624,4 @@ export default function BotsPage() {
         </div>
     );
 }
+
