@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MoreHorizontal, Trash2, Ban, CheckCircle, XCircle } from "lucide-react"
+import { MoreHorizontal, Trash2, Ban, CheckCircle, XCircle, ShieldX } from "lucide-react"
 import { get, ref, set, onValue, off, remove } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
@@ -254,7 +254,7 @@ export default function UsersPage() {
                                     อนุมัติ
                                 </Button>
                                 <Button size="sm" variant="destructive" onClick={() => handleReject(user)}>
-                                    <XCircle className="mr-2 h-4 w-4" />
+                                    <ShieldX className="mr-2 h-4 w-4" />
                                     ปฏิเสธ
                                 </Button>
                             </div>
