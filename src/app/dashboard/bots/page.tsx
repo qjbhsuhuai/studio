@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
-import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2, Clock } from 'lucide-react';
+import { PlusCircle, Bot, MoreHorizontal, Play, StopCircle, Trash2, CheckCircle, XCircle, Package, Terminal, GitBranch, Upload, FileCode, HardDrive, File, Folder, Settings, Link2, Clock, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -34,8 +34,10 @@ import {
 } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { CpuIcon, MemoryStickIcon } from '@/components/icons';
-import { get, ref, push, query, orderByChild, equalTo, find, set } from 'firebase/database';
+import { get, ref, onValue, off, push, query, orderByChild, equalTo, find, set } from 'firebase/database';
 import { db } from '@/lib/firebase';
+import { Slider } from '@/components/ui/slider';
+
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -80,6 +82,17 @@ const CountdownTimer = ({ expiryTimestamp }: { expiryTimestamp: number | undefin
     );
 };
 
+type User = {
+  id: string
+  firstName: string
+  lastName: string
+  name: string
+  email: string
+  role: string
+  status: "Active" | "Banned"
+  avatar: string
+  credits?: number
+}
 
 export default function BotsPage() {
     const [userId, setUserId] = useState<string | null>(null);
@@ -96,12 +109,30 @@ export default function BotsPage() {
     const [projectUid, setProjectUid] = useState('');
     const [createError, setCreateError] = useState<string | null>(null);
     const { toast } = useToast();
+    
+    // New states for project creation with credits
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [creationDays, setCreationDays] = useState(1);
+    const CREDITS_PER_DAY = 4;
+    const totalCost = creationDays * CREDITS_PER_DAY;
+    const hasEnoughCredits = currentUser?.credits !== undefined && currentUser.credits >= totalCost;
+
 
      useEffect(() => {
         const userEmail = sessionStorage.getItem('userEmail');
         if (userEmail) {
             const id = userEmail.replace(/[.#$[\]]/g, "_");
             setUserId(id);
+
+            // Fetch current user data for credits
+            const userRef = ref(db, `users/${id}`);
+            const listener = onValue(userRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    setCurrentUser({ id, ...snapshot.val() });
+                }
+            });
+            return () => off(userRef, 'value', listener);
+
         } else {
             // Handle case where user is not logged in
         }
@@ -186,12 +217,17 @@ export default function BotsPage() {
             toast({ title: 'เกิดข้อผิดพลาด', description: 'ไม่สามารถระบุผู้ใช้ได้ กรุณาล็อกอินใหม่อีกครั้ง', variant: 'destructive' });
             return;
         }
+         if (!hasEnoughCredits) {
+            toast({ title: 'เครดิตไม่เพียงพอ', description: 'คุณมีเครดิตไม่พอสำหรับสร้างโปรเจกต์ตามจำนวนวันที่เลือก', variant: 'destructive' });
+            return;
+        }
         setIsLoading(prev => ({ ...prev, create: true }));
         setCreateError(null);
         const formData = new FormData();
         formData.append('botName', newBotName);
         formData.append('creationMethod', creationMethod);
         formData.append('userId', userId);
+        formData.append('days', creationDays.toString()); // Send days to backend
 
         if (creationMethod === 'git') {
             formData.append('gitUrl', gitUrl);
@@ -226,6 +262,7 @@ export default function BotsPage() {
             setNewBotName('');
             setGitUrl('');
             setZipFile(null);
+            setCreationDays(1);
             mutate();
         } catch (err: any) {
             setCreateError(err.message);
@@ -325,10 +362,33 @@ export default function BotsPage() {
                         </TabsList>
                         
                         <TabsContent value="create">
-                            <div className="grid gap-4 py-4">
+                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="bot-name" className="text-right">ชื่อโปรเจกต์</Label>
                                     <Input id="bot-name" value={newBotName} onChange={(e) => setNewBotName(e.target.value)} className="col-span-3" placeholder="my-awesome-bot" />
+                                </div>
+                                <div className="grid grid-cols-4 items-start gap-4 pt-2">
+                                    <Label className="text-right pt-2">ระยะเวลา</Label>
+                                    <div className="col-span-3 space-y-3">
+                                        <Slider
+                                            value={[creationDays]}
+                                            onValueChange={(value) => setCreationDays(value[0])}
+                                            min={1}
+                                            max={30}
+                                            step={1}
+                                            disabled={!newBotName}
+                                        />
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-medium text-primary">{creationDays} วัน</span>
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <span>ค่าใช้จ่าย: {totalCost}</span>
+                                                <Coins className="h-4 w-4" />
+                                            </div>
+                                        </div>
+                                         <div className={`text-xs p-2 rounded-md ${hasEnoughCredits ? 'bg-green-500/10 text-green-400' : 'bg-destructive/10 text-destructive'}`}>
+                                            เครดิตของคุณ: {currentUser?.credits ?? 0}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <Tabs defaultValue="empty" className="w-full">
@@ -344,7 +404,7 @@ export default function BotsPage() {
                                                 <p>สร้างโปรเจกต์เปล่า คุณจะต้องเพิ่มไฟล์ในภายหลัง</p>
                                             </div>
                                              <DialogFooter className="mt-4">
-                                                <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName}>
+                                                <Button type="button" onClick={() => handleCreateProject('empty')} disabled={isLoading['create'] || !newBotName || !hasEnoughCredits}>
                                                     {isLoading['create'] ? 'กำลังสร้าง...' : 'สร้างโปรเจกต์'}
                                                 </Button>
                                             </DialogFooter>
@@ -359,7 +419,7 @@ export default function BotsPage() {
                                                 <Input id="git-url" value={gitUrl} onChange={e => setGitUrl(e.target.value)} placeholder="https://github.com/user/repo.git" />
                                             </div>
                                              <DialogFooter>
-                                                <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl}>
+                                                <Button type="button" onClick={() => handleCreateProject('git')} disabled={isLoading['create'] || !newBotName || !gitUrl || !hasEnoughCredits}>
                                                     {isLoading['create'] ? 'กำลังโคลน...' : 'โคลนโปรเจกต์'}
                                                 </Button>
                                             </DialogFooter>
@@ -374,7 +434,7 @@ export default function BotsPage() {
                                                 <Input id="zip-file" type="file" accept=".zip" onChange={e => setZipFile(e.target.files?.[0] || null)} />
                                             </div>
                                             <DialogFooter>
-                                                <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile}>
+                                                <Button type="button" onClick={() => handleCreateProject('zip')} disabled={isLoading['create'] || !newBotName || !zipFile || !hasEnoughCredits}>
                                                     {isLoading['create'] ? 'กำลังอัปโหลด...' : 'สร้างจาก ZIP'}
                                                 </Button>
                                             </DialogFooter>
@@ -552,5 +612,6 @@ export default function BotsPage() {
 
         </div>
     );
+}
 
     
