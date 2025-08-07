@@ -203,7 +203,6 @@ export default function BotsPage() {
             });
             const data = await res.json();
              if (!res.ok) throw new Error(data.message);
-            toast({ title: 'สำเร็จ', description: data.message });
         } catch (err: any) {
             toast({ title: 'เกิดข้อผิดพลาด', description: err.message, variant: 'destructive' });
         } finally {
